@@ -19,9 +19,13 @@ public class TowerSelectButton : MonoBehaviour, IPointerDownHandler
         {
             _isSelected = value;
             if (_isSelected == true)
-            { ChangeIcon(0.5f, 0.9f); }
+            {
+                ChangeIcon(0.5f, 0.9f);
+            }
             else
-            { ChangeIcon(1f, 1f); }
+            {
+                ChangeIcon(1f, 1f);
+            }
         }
     }
     private void Awake()
