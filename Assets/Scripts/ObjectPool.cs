@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
 [System.Serializable]
 public struct PoolConfig
 {
@@ -57,7 +58,7 @@ public class ObjectPool : MonoBehaviour
         }
         else
         {
-            return Instantiate(prefab);
+            return Instantiate(prefab, transform);
         }
     }
 

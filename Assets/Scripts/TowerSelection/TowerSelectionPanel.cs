@@ -6,7 +6,7 @@ public class TowerSelectionPanel : MonoBehaviour
 {
     private TowerSelectButton[] _selectButtons;
     private TowerSelectButton _currentButton;
-    private Action<GameObject> OnTowerSelected;
+    public Action<GameObject> OnTowerSelected;
     private void Start()
     {
         _selectButtons = GetComponentsInChildren<TowerSelectButton>();

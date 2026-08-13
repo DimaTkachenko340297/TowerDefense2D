@@ -80,7 +80,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 10
   m_MaskInteraction: 0
   m_Sprite: {fileID: 21300000, guid: 0a0b70cfd52e574419e377163923b946, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 0.4}
@@ -106,4 +106,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TowerPlacementPreview
   _validPlacementColor: {r: 0.7294118, g: 0.85490197, b: 0.33333334, a: 1}
   _placementBlockedColor: {r: 0.85490197, g: 0.39148235, b: 0.33333334, a: 1}
-  _previewAlpha: 0.4
+  _previewAlpha: 0.8
