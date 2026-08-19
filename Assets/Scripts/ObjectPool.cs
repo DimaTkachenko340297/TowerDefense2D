@@ -5,8 +5,8 @@ using UnityEngine;
 [System.Serializable]
 public struct PoolConfig
 {
-    public GameObject Prefab;
-    public int PrewarmCount;
+    [field: SerializeField] public GameObject Prefab { get; private set; }
+    [field: SerializeField] public int PrewarmCount { get; private set; }
 }
 public class ObjectPool : MonoBehaviour
 {

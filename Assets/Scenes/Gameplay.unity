@@ -1536,10 +1536,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ObjectPool
   _poolsConfig:
-  - Prefab: {fileID: 3486426707978137572, guid: b89215e7ae00d734399303c0602b6c03, type: 3}
-    PrewarmCount: 3
-  - Prefab: {fileID: 92403643684560418, guid: f022541fb2b560c4a99a2dc17337a048, type: 3}
-    PrewarmCount: 3
+  - <Prefab>k__BackingField: {fileID: 3486426707978137572, guid: b89215e7ae00d734399303c0602b6c03, type: 3}
+    <PrewarmCount>k__BackingField: 3
+  - <Prefab>k__BackingField: {fileID: 92403643684560418, guid: f022541fb2b560c4a99a2dc17337a048, type: 3}
+    <PrewarmCount>k__BackingField: 3
 --- !u!1 &1631564159
 GameObject:
   m_ObjectHideFlags: 0
@@ -1840,7 +1840,7 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_VertexColorAlwaysGammaSpace: 1
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: -700017055
   m_SortingOrder: 0
