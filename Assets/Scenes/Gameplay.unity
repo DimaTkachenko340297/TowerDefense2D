@@ -772,7 +772,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 16777215
+    rgba: 4294967295
   m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -2110,8 +2110,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NextWaveButton
   _tooltipAnimation: {fileID: 2002869033}
   _hideClip: {fileID: 7400000, guid: 3666b3081f28210479ac3eaf95c6ae84, type: 2}
+  _holdThresholdDuration: 0.5
   _text: {fileID: 561518558}
-  _requireDuration: 0.5
   _animationDuration: 0.2
   _animationCurve:
     serializedVersion: 2
@@ -2206,6 +2206,81 @@ MonoBehaviour:
     <PrewarmCount>k__BackingField: 3
   - <Prefab>k__BackingField: {fileID: 92403643684560418, guid: f022541fb2b560c4a99a2dc17337a048, type: 3}
     <PrewarmCount>k__BackingField: 3
+--- !u!1 &1579588644
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1579588645}
+  - component: {fileID: 1579588647}
+  - component: {fileID: 1579588646}
+  m_Layer: 0
+  m_Name: EnemySpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1579588645
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1579588644}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -5.0676, y: -5.36211, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1579588646
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1579588644}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c3b5d623fc51c9b4d906dca3275caa02, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
+  _listWaves:
+  - <WaveDifficultyBonus>k__BackingField: -1
+    <HardEnemySpawnRate>k__BackingField: 0.4
+  - <WaveDifficultyBonus>k__BackingField: 3
+    <HardEnemySpawnRate>k__BackingField: 0.5
+  - <WaveDifficultyBonus>k__BackingField: 2
+    <HardEnemySpawnRate>k__BackingField: 0.6
+  _additionalTimeBetweenWaves: 2
+  _timeBetweenSpawnNextEnemy: 0.5
+  _initialBaseEnemyCount: 5
+  _baseEnemy: {fileID: 4944696241114774442, guid: 398ed1f949712a942b8976b909d3d34a, type: 3}
+  _hardEnemy: {fileID: 9059339454348993720, guid: 4797662c254130543b29c726cfd2f0a9, type: 3}
+  _button: {fileID: 1405467091}
+--- !u!114 &1579588647
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1579588644}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 051480f225dc1bd41b3a7fe24781cd73, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ObjectPool
+  _poolsConfig:
+  - <Prefab>k__BackingField: {fileID: 4944696241114774442, guid: 398ed1f949712a942b8976b909d3d34a, type: 3}
+    <PrewarmCount>k__BackingField: 30
+  - <Prefab>k__BackingField: {fileID: 9059339454348993720, guid: 4797662c254130543b29c726cfd2f0a9, type: 3}
+    <PrewarmCount>k__BackingField: 30
 --- !u!1 &1631564159
 GameObject:
   m_ObjectHideFlags: 0
@@ -4241,4 +4316,5 @@ SceneRoots:
   - {fileID: 2095109912}
   - {fileID: 1894445992}
   - {fileID: 1436421231}
+  - {fileID: 1579588645}
   - {fileID: 467939092}

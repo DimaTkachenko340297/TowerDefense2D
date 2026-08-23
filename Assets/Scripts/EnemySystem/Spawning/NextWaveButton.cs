@@ -11,20 +11,20 @@ public class NextWaveButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
     [SerializeField] private AnimationClip _hideClip;
 
     [Header("Hold Settings")]
-    [SerializeField] private float _holdThresholdDuration = 0.5f;
+    [SerializeField, Min(0f)] private float _holdThresholdDuration = 0.5f;
     [SerializeField] private TMP_Text _text;
 
     [Header("Animation General Settings")]
-    [SerializeField] private float _animationDuration = 0.2f;
-    [SerializeField] private AnimationCurve _animationCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+    [SerializeField, Min(0f)] private float _animationDuration = 0.2f;
+    [SerializeField] private AnimationCurve _animationCurve;
 
     [Space(2)]
-    [SerializeField] private float _normalAlpha = 1f;
-    [SerializeField] private float _pressedAlpha = 0.5f;
+    [SerializeField, Range(0f, 1f)] private float _normalAlpha = 1f;
+    [SerializeField, Range(0f, 1f)] private float _pressedAlpha = 0.5f;
 
     [Space(2)]
-    [SerializeField] private float _normalScaleMultiplier = 1f;
-    [SerializeField] private float _pressedScaleMultiplier = 0.9f;
+    [SerializeField, Min(0f)] private float _normalScaleMultiplier = 1f;
+    [SerializeField, Min(0f)] private float _pressedScaleMultiplier = 0.9f;
 
     private Vector3 _defaultTextSize;
     private WaitForSeconds _holdWaitInstruction;
@@ -36,8 +36,22 @@ public class NextWaveButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
     private Coroutine _buttonAnimationCoroutine;
     private Coroutine _tooltipAnimationCoroutine;
 
-    public Action OnPressedButton;
-    public Action OnButtonHeld;
+    public Action OnWaveRequested;
+
+    public bool IsAuto { get; private set; }
+    private bool _isBlocked;
+    public bool IsBlocked
+    {
+        get => _isBlocked;
+        set
+        {
+            _isBlocked = value;
+            if (!IsAuto)
+            {
+                SetPressedState(_isBlocked);
+            }
+        }
+    }
 
     private void Awake()
     {
@@ -49,19 +63,19 @@ public class NextWaveButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
             
             if (_text == null)
             {
-                Debug.LogError($"NextWaveButton:Awake() TMP_Text component is missing on {gameObject.name} and its children!");
+                Debug.LogError($"NextWaveButton::Awake() TMP_Text component is missing on {gameObject.name} and its children!");
                 enabled = false;
                 return;
             }
             
-            Debug.LogWarning($"NextWaveButton:Awake() _text was not assigned in Inspector. Auto-assigned to child: {_text.name}");
+            Debug.LogWarning($"NextWaveButton::Awake() _text was not assigned in Inspector. Auto-assigned to child: {_text.name}");
         }
 
         _defaultTextSize = _text.transform.localScale;
 
         if (_tooltipAnimation == null || _hideClip == null)
         {
-            Debug.LogWarning($"NextWaveButton:Awake() Tooltip Animation or Clip is missing. Tooltip system disabled.");
+            Debug.LogWarning("NextWaveButton::Awake() Tooltip Animation or Clip is missing. Tooltip system disabled.");
             _isTooltipHidden = true;
         }
     }
@@ -70,7 +84,10 @@ public class NextWaveButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
     {
         _pointerDownTime = Time.time;
         
-        SetPressedState(true);
+        if (!_isBlocked)
+        {
+            SetPressedState(true);
+        }
 
         if (_holdCoroutine != null)
         {
@@ -99,9 +116,13 @@ public class NextWaveButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
 
         if (holdDuration <= _holdThresholdDuration)
         {
-            SetPressedState(false);
+            if (!_isBlocked)
+            {
+                SetPressedState(false);
+            }
             _text.text = "Go";
-            OnPressedButton?.Invoke();
+            IsAuto = false;
+            OnWaveRequested?.Invoke();
         }
     }
 
@@ -123,7 +144,8 @@ public class NextWaveButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
         yield return _holdWaitInstruction;
         
         _text.text = "Auto";
-        OnButtonHeld?.Invoke();
+        IsAuto = true;
+        OnWaveRequested?.Invoke();
     }
 
     private IEnumerator HideTooltipRoutine()
