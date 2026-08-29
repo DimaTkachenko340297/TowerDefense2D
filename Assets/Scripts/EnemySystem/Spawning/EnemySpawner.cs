@@ -11,6 +11,9 @@ public struct EnemyWave
 
 public class EnemySpawner : MonoBehaviour
 {
+    [Header("Pool System")]
+    [SerializeField] private ObjectPool _objectPool;
+
     [Header("Waves Systems")]
     [SerializeField] private List<EnemyWave> _listWaves;
     [SerializeField, Min(0f)] private float _timeBetweenSpawnNextEnemy = 0.5f;
@@ -42,19 +45,26 @@ public class EnemySpawner : MonoBehaviour
         _waitForManualWaveDelay = new WaitForSeconds(_manualWaveDelay);
         _waitForAutoWaveDelay = new WaitForSeconds(_autoWaveDelay);
         _waitForSpawnNextEnemy = new WaitForSeconds(_timeBetweenSpawnNextEnemy);
-        
+
         ResetSpawner();
     }
 
     private void Start()
     {
+        if (_objectPool == null)
+        {
+            Debug.LogError("EnemySpawner::Start() _objectPool reference was not assigned in Inspector!");
+            gameObject.SetActive(false);
+            return;
+        }
+
         if (_button != null)
         {
             _button.OnWaveRequested += StartWave;
         }
         else
         {
-            Debug.LogError("EnemySpawner::Start() _button was not found!");
+            Debug.LogError("EnemySpawner::Start() _button reference was not found!");
             gameObject.SetActive(false);
         }
     }
@@ -82,7 +92,7 @@ public class EnemySpawner : MonoBehaviour
 
         if (_listWaves == null || _listWaves.Count == 0)
         {
-            Debug.LogWarning("EnemySpawner::SpawnWave() Wave list is empty!");
+            Debug.LogWarning("EnemySpawner::SpawnWave() Wave list is empty or not initialized!");
             _isSpawning = false;
             _button.IsBlocked = false;
             yield break;
@@ -91,25 +101,21 @@ public class EnemySpawner : MonoBehaviour
         EnemyWave currentWaveConfig = _listWaves[_currentWaveIndex];
 
         _accumulatedEnemyCount += currentWaveConfig.WaveDifficultyBonus;
+        _accumulatedEnemyCount = Mathf.Max(_accumulatedEnemyCount, 1);
         int hardEnemyCount = Mathf.RoundToInt(_accumulatedEnemyCount * currentWaveConfig.HardEnemySpawnRate);
         int baseEnemyCount = _accumulatedEnemyCount - hardEnemyCount;
 
-        Debug.Log($"<color=yellow>EnemySpawner::SpawnWave() Starting Wave #{_currentWaveIndex + 1}</color>\n" +
-                  $"Total Enemies: {_accumulatedEnemyCount} (Base: {baseEnemyCount}, Hard: {hardEnemyCount})");
-
         for (int i = 0; i < baseEnemyCount; i++)
         {
-            Debug.Log($"EnemySpawner::SpawnWave() Spawned <color=green>base Enemy</color> ({i + 1}/{baseEnemyCount})");
+            SpawnSingleEnemy(_baseEnemy);
             yield return _waitForSpawnNextEnemy;
         }
 
         for (int i = 0; i < hardEnemyCount; i++)
         {
-            Debug.Log($"EnemySpawner::SpawnWave() Spawned <color=red>hard Enemy</color> ({i + 1}/{hardEnemyCount})");
+            SpawnSingleEnemy(_hardEnemy);
             yield return _waitForSpawnNextEnemy;
         }
-
-        Debug.Log($"<color=green>EnemySpawner::SpawnWave() Wave #{_currentWaveIndex + 1} completed!</color>");
 
         _currentWaveIndex = (_currentWaveIndex + 1) % _listWaves.Count;
 
@@ -125,6 +131,41 @@ public class EnemySpawner : MonoBehaviour
 
         _isSpawning = false;
         _button.IsBlocked = false;
+    }
+
+    private void SpawnSingleEnemy(GameObject enemyPrefab)
+    {
+        if (enemyPrefab == null)
+        {
+            Debug.LogError("EnemySpawner::SpawnSingleEnemy() Enemy prefab reference is null!");
+            return;
+        }
+
+        if (_objectPool == null)
+        {
+            Debug.LogError("EnemySpawner::SpawnSingleEnemy() ObjectPool reference is null!");
+            return;
+        }
+
+        GameObject enemyInstance = _objectPool.Get(enemyPrefab);
+
+        if (enemyInstance.TryGetComponent(out Enemy enemy))
+        {
+            enemy.OriginPrefab = enemyPrefab;
+
+            if (EnemyMovementManager.Instance != null)
+            {
+                EnemyMovementManager.Instance.RegisterEnemy(enemy);
+            }
+            else
+            {
+                Debug.LogError("EnemySpawner::SpawnSingleEnemy() EnemyMovementManager Instance is null!");
+            }
+        }
+        else
+        {
+            Debug.LogError("EnemySpawner::SpawnSingleEnemy() Spawned prefab is missing the Enemy component!");
+        }
     }
 
     public void ResetSpawner()

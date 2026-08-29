@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4194431353398183143}
   - component: {fileID: 8796704871718428474}
+  - component: {fileID: 2646568126135962094}
   m_Layer: 0
   m_Name: BaseEnemy
   m_TagString: Untagged
@@ -91,3 +92,18 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &2646568126135962094
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4944696241114774442}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27ec6e94b2d74034db0456946c0a8a4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Enemy
+  _prefab: {fileID: 4944696241114774442}
+  OriginPrefab: {fileID: 0}
+  _moveSpeed: 1.5
