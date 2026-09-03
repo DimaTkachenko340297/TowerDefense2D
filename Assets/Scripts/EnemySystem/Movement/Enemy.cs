@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour
@@ -14,7 +15,12 @@ public class Enemy : MonoBehaviour
             }
         }
     }
+    // (Enemy thisEnemy)
+    public event Action<Enemy> OnDied;
 
+    [SerializeField] private float _maxHealth = 100f;
+    private float _currentHealth;
+    
     [SerializeField, Min(0.1f)] private float _moveSpeed = 3f;
 
     public float MoveSpeed => _moveSpeed;
@@ -35,9 +41,37 @@ public class Enemy : MonoBehaviour
         } 
     }
 
-    public void ResetMovementData()
+    public float GetTotalProgress() 
+    { 
+        return CurrentWaypointIndex + LerpProgress;
+    }
+
+    public void ResetState()
     {
         CurrentWaypointIndex = 0;
         LerpProgress = 0f;
+        _currentHealth = _maxHealth;
+        OnDied = null;
+    }
+
+    public void TakeDamage(float amount)
+    {
+        if (_currentHealth <= 0f)
+        {
+            return;
+        }
+
+        _currentHealth -= amount;
+
+        if (_currentHealth <= 0f)
+        {
+            _currentHealth = 0f;
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        OnDied?.Invoke(this);
     }
 }

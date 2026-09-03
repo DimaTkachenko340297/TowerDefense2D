@@ -10,7 +10,11 @@ public class TowerSelectionPanel : MonoBehaviour
     private void Start()
     {
         _selectButtons = GetComponentsInChildren<TowerSelectButton>();
-        if (_selectButtons == null) return;
+        if (_selectButtons == null) 
+        {
+            return;
+        }
+
         if (_selectButtons.Length == 0)
         {
             Debug.LogWarning("TowerSelectionPanel::Start() didn't find TowerSelectButtons in children");
@@ -18,15 +22,22 @@ public class TowerSelectionPanel : MonoBehaviour
         }
 
         foreach (TowerSelectButton button in _selectButtons)
+        {
             button.OnButtonSelected += HandleTowerSelection;
+        }
     }
 
     private void OnDisable()
     {
-        if (_selectButtons == null || _selectButtons.Length == 0) return;
+        if (_selectButtons == null || _selectButtons.Length == 0) 
+        {
+            return;
+        }
 
         foreach (TowerSelectButton button in _selectButtons)
+        {
             button.OnButtonSelected -= HandleTowerSelection;
+        }
     }
 
     private void HandleTowerSelection(TowerSelectButton button)
@@ -38,8 +49,9 @@ public class TowerSelectionPanel : MonoBehaviour
         }
         
         if (_currentButton != null)
+        {
             _currentButton.IsSelected = false;
-
+        }
         _currentButton = button;
         _currentButton.IsSelected = true;
         OnTowerSelected?.Invoke(_currentButton.TowerPrefab);
@@ -47,7 +59,10 @@ public class TowerSelectionPanel : MonoBehaviour
 
     public void DeselectTower()
     {
-        if (_currentButton == null) return;
+        if (_currentButton == null)
+        { 
+            return;
+        }
 
         _currentButton.IsSelected = false;
         _currentButton = null;

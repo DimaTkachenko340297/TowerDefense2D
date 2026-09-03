@@ -28,7 +28,9 @@ public class TowerPlacementPreview : MonoBehaviour
     private void ApplyColor()
     {
         if (_spriteRenderer == null)
+        {
             _spriteRenderer = GetComponent<SpriteRenderer>();
+        }
 
         Color targetColor = _isValid ? _validPlacementColor : _placementBlockedColor;
         targetColor.a = _previewAlpha;

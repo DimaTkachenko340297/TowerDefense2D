@@ -27,7 +27,7 @@ public class NextWaveButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
     [SerializeField, Min(0f)] private float _pressedScaleMultiplier = 0.9f;
 
     private Vector3 _defaultTextSize;
-    private WaitForSeconds _holdWaitInstruction;
+    private WaitForSeconds _waitForHoldDuration;
     private bool _isTooltipHidden;
     private float _pointerDownTime;
     private float _currentScaleMultiplier = 1f;
@@ -55,7 +55,7 @@ public class NextWaveButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
 
     private void Awake()
     {
-        _holdWaitInstruction = new WaitForSeconds(_holdThresholdDuration);
+        _waitForHoldDuration = new WaitForSeconds(_holdThresholdDuration);
 
         if (_text == null)
         {
@@ -141,7 +141,7 @@ public class NextWaveButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
 
     private IEnumerator HoldRoutine()
     {
-        yield return _holdWaitInstruction;
+        yield return _waitForHoldDuration;
         
         _text.text = "Auto";
         IsAuto = true;

@@ -104,6 +104,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 27ec6e94b2d74034db0456946c0a8a4d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
-  _prefab: {fileID: 9059339454348993720}
-  OriginPrefab: {fileID: 0}
+  _maxHealth: 125
   _moveSpeed: 2

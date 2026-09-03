@@ -10,6 +10,8 @@ GameObject:
   m_Component:
   - component: {fileID: 2454349291417746198}
   - component: {fileID: 7447638266777552651}
+  - component: {fileID: 365094277977907686}
+  - component: {fileID: 710099006796908814}
   m_Layer: 0
   m_Name: Archer
   m_TagString: Untagged
@@ -91,3 +93,32 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &365094277977907686
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3486426707978137572}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 346f6e0678a14c64588c0ae05c216b30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Tower
+  _fireRate: 1
+  _projectilePrefab: {fileID: 8474387983528222420, guid: 3278be4823366e546ab812d5fb0cab85, type: 3}
+  _projectileSpeed: 15
+  _damage: 50
+--- !u!114 &710099006796908814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3486426707978137572}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67e8dea547a6f4d41954bdc44ddddfbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerTargeting
+  _attackRange: 2.5

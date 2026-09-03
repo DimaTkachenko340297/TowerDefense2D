@@ -9,7 +9,7 @@ public class TowerSelectButton : MonoBehaviour, IPointerDownHandler
     public GameObject TowerPrefab => _towerPrefab;
     [SerializeField] private Image _icon;
     private Vector3 _defaultIconSize;
-    // (TowerSelectButton thisButton)
+    // (GameObject towerPrefab)
     public Action<TowerSelectButton> OnButtonSelected;
     private bool _isSelected = false;
     public bool IsSelected

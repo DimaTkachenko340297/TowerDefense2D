@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,6 +10,8 @@ using UnityEngine.Tilemaps;
 [RequireComponent(typeof(ObjectPool))]
 public class BuildingManager : MonoBehaviour
 {
+    // (Tower placedTower)
+    public event Action<Tower> OnTowerPlaced;
     [SerializeField] private Tilemap _placementMap;
     [SerializeField] private TowerSelectionPanel _selectionPanel;
 
@@ -65,7 +68,9 @@ public class BuildingManager : MonoBehaviour
         _ghostPlacementPreview = _ghostTower.GetComponent<TowerPlacementPreview>();
 
         if (_ghostPlacementPreview == null)
+        {
             Debug.LogWarning("BuildingManager::Start() didn't find TowerPlacementPreview on _ghostTowerPrefab");
+        }
     }
 
     private IEnumerator ProcessPlacementPreviewRoutine(GameObject towerPrefab)
@@ -123,6 +128,10 @@ public class BuildingManager : MonoBehaviour
                     _occupiedTiles[cellPosition] = towerPrefab;
                     GameObject tower = _objectPool.Get(towerPrefab);
                     tower.transform.position = offsetPosition;
+                    if (tower.TryGetComponent<Tower>(out Tower towerComponent))
+                    {
+                        OnTowerPlaced?.Invoke(towerComponent);
+                    }
                 }
                 StopPlacement();
             }
