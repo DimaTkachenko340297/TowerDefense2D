@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -32,12 +33,16 @@ public class EnemySpawner : MonoBehaviour
     [Space(2)]
     [SerializeField] private NextWaveButton _button;
 
+    // (int wavesCount)
+    public Action<int> OnCompletedWavesCountChanged;
+
     private WaitForSeconds _waitForManualWaveDelay;
     private WaitForSeconds _waitForAutoWaveDelay;
     private WaitForSeconds _waitForSpawnNextEnemy;
 
     private int _accumulatedEnemyCount;
     private int _currentWaveIndex;
+    private int _wavesCount = 0;
     private bool _isSpawning;
 
     private void Awake()
@@ -97,6 +102,9 @@ public class EnemySpawner : MonoBehaviour
             _button.IsBlocked = false;
             yield break;
         }
+
+        _wavesCount += 1;
+        OnCompletedWavesCountChanged?.Invoke(_wavesCount);
 
         EnemyWave currentWaveConfig = _listWaves[_currentWaveIndex];
 
@@ -171,6 +179,7 @@ public class EnemySpawner : MonoBehaviour
     public void ResetSpawner()
     {
         _currentWaveIndex = 0;
+        _wavesCount = 0;
         _accumulatedEnemyCount = _initialBaseEnemyCount;
         _isSpawning = false;
     }

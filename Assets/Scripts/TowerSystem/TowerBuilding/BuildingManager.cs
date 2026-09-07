@@ -73,8 +73,21 @@ public class BuildingManager : MonoBehaviour
         }
     }
 
-    private IEnumerator ProcessPlacementPreviewRoutine(GameObject towerPrefab)
+    private IEnumerator ProcessPlacementPreviewRoutine(GameObject towerPrefab, int cost)
     {
+        if (GoldManager.Instance == null)
+        {
+            Debug.LogWarning("BuildingManager::ProcessPlacementPreviewRoutine() received null GoldManager.Instance");
+            StopPlacement();
+            yield break;
+        }
+
+        if (GoldManager.Instance.CurrentGold < cost)
+        {
+            StopPlacement();
+            yield break;
+        }
+
         if (Mouse.current == null)
         {
             Debug.LogError("BuildingManager::ProcessPlacementPreviewRoutine() didn't find Mouse device");
@@ -112,7 +125,7 @@ public class BuildingManager : MonoBehaviour
 
             _ghostTower.transform.position = offsetPosition;
 
-            bool isValidTile = _placementMap.HasTile(cellPosition) && !_occupiedTiles.ContainsKey(cellPosition);
+            bool isValidTile = GoldManager.Instance.HasEnoughGold(cost) && _placementMap.HasTile(cellPosition) && !_occupiedTiles.ContainsKey(cellPosition);
             _ghostPlacementPreview.IsValid = isValidTile;
 
             if (Mouse.current.leftButton.wasPressedThisFrame)
@@ -125,6 +138,7 @@ public class BuildingManager : MonoBehaviour
 
                 if (isValidTile)
                 {
+                    GoldManager.Instance.TakeGold(cost);
                     _occupiedTiles[cellPosition] = towerPrefab;
                     GameObject tower = _objectPool.Get(towerPrefab);
                     tower.transform.position = offsetPosition;
@@ -140,10 +154,10 @@ public class BuildingManager : MonoBehaviour
         }
     }
 
-    private void StartPlacement(GameObject towerPrefab)
+    private void StartPlacement(GameObject towerPrefab, int cost)
     {
         StopAllCoroutines();
-        StartCoroutine(ProcessPlacementPreviewRoutine(towerPrefab));
+        StartCoroutine(ProcessPlacementPreviewRoutine(towerPrefab, cost));
     }
 
     private void StopPlacement()

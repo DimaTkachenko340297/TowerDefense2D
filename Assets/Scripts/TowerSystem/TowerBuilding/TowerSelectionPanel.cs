@@ -6,7 +6,8 @@ public class TowerSelectionPanel : MonoBehaviour
 {
     private TowerSelectButton[] _selectButtons;
     private TowerSelectButton _currentButton;
-    public Action<GameObject> OnTowerSelected;
+    // (GameObject towerPrefabe, int cost)
+    public Action<GameObject, int> OnTowerSelected;
     private void Start()
     {
         _selectButtons = GetComponentsInChildren<TowerSelectButton>();
@@ -25,6 +26,12 @@ public class TowerSelectionPanel : MonoBehaviour
         {
             button.OnButtonSelected += HandleTowerSelection;
         }
+
+        if (GoldManager.Instance != null)
+        {
+            GoldManager.Instance.OnGoldChanged += RefreshButtonsAvailability;
+            RefreshButtonsAvailability(GoldManager.Instance.CurrentGold);
+        }
     }
 
     private void OnDisable()
@@ -37,6 +44,30 @@ public class TowerSelectionPanel : MonoBehaviour
         foreach (TowerSelectButton button in _selectButtons)
         {
             button.OnButtonSelected -= HandleTowerSelection;
+        }
+
+        if (GoldManager.Instance != null)
+        {
+            GoldManager.Instance.OnGoldChanged -= RefreshButtonsAvailability;
+        }
+    }
+
+    private void RefreshButtonsAvailability(int amount)
+    {
+        if (_selectButtons == null)
+        {
+            return;
+        }
+
+        foreach (TowerSelectButton button in _selectButtons)
+        {
+            bool canAfford;
+            canAfford = button.SetHasEnoughGold(amount);
+
+            if (!canAfford && button.IsSelected)
+            {
+                DeselectTower();
+            }
         }
     }
 
@@ -54,7 +85,7 @@ public class TowerSelectionPanel : MonoBehaviour
         }
         _currentButton = button;
         _currentButton.IsSelected = true;
-        OnTowerSelected?.Invoke(_currentButton.TowerPrefab);
+        OnTowerSelected?.Invoke(_currentButton.TowerPrefab, _currentButton.Cost);
     }
 
     public void DeselectTower()

@@ -22,6 +22,8 @@ public class Tower : MonoBehaviour
         {
             Debug.LogError("Tower::Awake() TowerTargeting component is missing!");
         }
+
+        _nextFireTime = Time.time;
     }
 
     private void OnDisable()

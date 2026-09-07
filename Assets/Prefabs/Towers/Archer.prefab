@@ -105,7 +105,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 346f6e0678a14c64588c0ae05c216b30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Tower
-  _fireRate: 1
+  _fireRate: 0.75
   _projectilePrefab: {fileID: 8474387983528222420, guid: 3278be4823366e546ab812d5fb0cab85, type: 3}
   _projectileSpeed: 15
   _damage: 50
@@ -121,4 +121,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 67e8dea547a6f4d41954bdc44ddddfbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerTargeting
-  _attackRange: 2.5
+  _attackRange: 3

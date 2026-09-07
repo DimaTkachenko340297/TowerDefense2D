@@ -23,6 +23,11 @@ public class Enemy : MonoBehaviour
     
     [SerializeField, Min(0.1f)] private float _moveSpeed = 3f;
 
+    [Space(2)]
+    [SerializeField, Min(0)] private int _goldPerKill = 1;
+    public int GoldPerKill => _goldPerKill;
+
+
     public float MoveSpeed => _moveSpeed;
     private int _currentWaypointIndex;
     public int CurrentWaypointIndex { 

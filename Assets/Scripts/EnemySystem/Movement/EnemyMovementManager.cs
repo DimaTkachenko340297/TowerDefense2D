@@ -104,6 +104,11 @@ public class EnemyMovementManager : MonoBehaviour
 
         enemy.OnDied -= UnregisterEnemy;
 
+        if (GoldManager.Instance != null)
+        {
+            GoldManager.Instance.AddGold(enemy.GoldPerKill);
+        }
+
         if (_activeEnemies.Remove(enemy))
         {
             if (_objectPool != null && enemy.OriginPrefab != null)

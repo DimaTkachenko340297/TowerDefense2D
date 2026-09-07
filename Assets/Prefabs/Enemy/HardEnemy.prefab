@@ -106,3 +106,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
   _maxHealth: 125
   _moveSpeed: 2
+  _goldPerKill: 2
