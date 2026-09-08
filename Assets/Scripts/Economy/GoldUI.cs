@@ -10,7 +10,7 @@ public class GoldUI : MonoBehaviour
     {
         if (_goldText == null)
         {
-            Debug.LogError("GoldUI::Start() TMP_Text reference is missing!");
+            Debug.LogError("GoldUI::Start() _goldText reference is missing!");
             Destroy(this);
         }
 

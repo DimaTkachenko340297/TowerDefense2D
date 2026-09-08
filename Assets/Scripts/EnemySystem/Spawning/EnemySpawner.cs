@@ -43,6 +43,7 @@ public class EnemySpawner : MonoBehaviour
     private int _accumulatedEnemyCount;
     private int _currentWaveIndex;
     private int _wavesCount = 0;
+    public int WavesCount => _wavesCount;
     private bool _isSpawning;
 
     private void Awake()
@@ -97,7 +98,7 @@ public class EnemySpawner : MonoBehaviour
 
         if (_listWaves == null || _listWaves.Count == 0)
         {
-            Debug.LogWarning("EnemySpawner::SpawnWave() Wave list is empty or not initialized!");
+            Debug.LogWarning("EnemySpawner::SpawnWave() _listWaves is empty or not initialized!");
             _isSpawning = false;
             _button.IsBlocked = false;
             yield break;
@@ -145,13 +146,13 @@ public class EnemySpawner : MonoBehaviour
     {
         if (enemyPrefab == null)
         {
-            Debug.LogError("EnemySpawner::SpawnSingleEnemy() Enemy prefab reference is null!");
+            Debug.LogError("EnemySpawner::SpawnSingleEnemy() enemyPrefab reference is null!");
             return;
         }
 
         if (_objectPool == null)
         {
-            Debug.LogError("EnemySpawner::SpawnSingleEnemy() ObjectPool reference is null!");
+            Debug.LogError("EnemySpawner::SpawnSingleEnemy() _objectPool reference is null!");
             return;
         }
 
@@ -167,7 +168,7 @@ public class EnemySpawner : MonoBehaviour
             }
             else
             {
-                Debug.LogError("EnemySpawner::SpawnSingleEnemy() EnemyMovementManager Instance is null!");
+                Debug.LogError("EnemySpawner::SpawnSingleEnemy() EnemyMovementManager.Instance is null!");
             }
         }
         else

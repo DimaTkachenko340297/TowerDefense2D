@@ -20,7 +20,7 @@ public class Tower : MonoBehaviour
         _targeting = GetComponent<TowerTargeting>();
         if (_targeting == null)
         {
-            Debug.LogError("Tower::Awake() TowerTargeting component is missing!");
+            Debug.LogError("Tower::Awake() _targeting component is missing!");
         }
 
         _nextFireTime = Time.time;
@@ -56,7 +56,7 @@ public class Tower : MonoBehaviour
 
         if (_projectilePrefab == null)
         {
-            Debug.LogError("Tower::Shoot() ProjectilePrefab is missing!");
+            Debug.LogError("Tower::Shoot() _projectilePrefab reference is missing!");
             target.TakeDamage(_damage); 
             return;
         }

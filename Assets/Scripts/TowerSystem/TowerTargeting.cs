@@ -46,7 +46,7 @@ public class TowerTargeting : MonoBehaviour
         
         if (EnemyMovementManager.Instance == null)
         {
-            Debug.LogError("TowerTargeting::BakeTargetingData() EnemyMovementManager instance is missing!");
+            Debug.LogError("TowerTargeting::BakeTargetingData() EnemyMovementManager.Instance is missing!");
             return;
         }
 
@@ -128,7 +128,7 @@ public class TowerTargeting : MonoBehaviour
     {
         if (EnemyMovementManager.Instance == null)
         {
-            Debug.LogError("TowerTargeting::GetFirstTarget() EnemyMovementManager instance is missing!");
+            Debug.LogError("TowerTargeting::GetFirstTarget() EnemyMovementManager.Instance is missing!");
             return null;
         }
 

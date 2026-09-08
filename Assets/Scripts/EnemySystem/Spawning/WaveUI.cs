@@ -10,19 +10,20 @@ public class WaveUI : MonoBehaviour
     {
         if (_waveText == null)
         {
-            Debug.LogError("WaveUI::Start() TMP_Text reference is missing!");
+            Debug.LogError("WaveUI::Start() _waveText reference is missing!");
             Destroy(this);
             return;
         }
 
         if (_enemySpawner == null)
         {
-            Debug.LogError("WaveUI::Start() EnemySpawner reference is missing!");
+            Debug.LogError("WaveUI::Start() _enemySpawner reference is missing!");
             Destroy(this);
             return;
         }
 
         _enemySpawner.OnCompletedWavesCountChanged += UpdateWaveText;
+        _waveText.text = "";
     }
 
     private void OnDisable()

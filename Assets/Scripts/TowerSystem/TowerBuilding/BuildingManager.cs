@@ -47,7 +47,7 @@ public class BuildingManager : MonoBehaviour
 
             if (_selectionPanel == null)
             {
-                Debug.LogError("BuildingManager::Start() didn't find TowerSelectionPanel in the scene");
+                Debug.LogError("BuildingManager::Start() didn't find _selectionPanel in the scene");
                 return;
             }   
         }
@@ -90,7 +90,7 @@ public class BuildingManager : MonoBehaviour
 
         if (Mouse.current == null)
         {
-            Debug.LogError("BuildingManager::ProcessPlacementPreviewRoutine() didn't find Mouse device");
+            Debug.LogError("BuildingManager::ProcessPlacementPreviewRoutine() didn't find Mouse.current");
             StopPlacement();
             yield break;
         }

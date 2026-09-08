@@ -21,7 +21,7 @@ public class ProjectileManager : MonoBehaviour
 
         if (_objectPool == null)
         {
-            Debug.LogError("ProjectileManager::Awake() ObjectPool reference is missing!");
+            Debug.LogError("ProjectileManager::Awake() _objectPool reference is missing!");
         }
     }
 

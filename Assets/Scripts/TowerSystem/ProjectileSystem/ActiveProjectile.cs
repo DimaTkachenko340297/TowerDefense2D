@@ -62,7 +62,7 @@ public struct ActiveProjectile
     {
         if (_transform == null)
         {
-            Debug.LogError("ActiveProjectile::Tick() Transform reference is missing!");
+            Debug.LogError("ActiveProjectile::Tick() _transform reference is missing!");
             return true;
         }
 

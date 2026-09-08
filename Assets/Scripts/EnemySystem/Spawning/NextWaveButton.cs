@@ -63,7 +63,7 @@ public class NextWaveButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
             
             if (_text == null)
             {
-                Debug.LogError($"NextWaveButton::Awake() TMP_Text component is missing on {gameObject.name} and its children!");
+                Debug.LogError($"NextWaveButton::Awake() _text component is missing on {gameObject.name} and its children!");
                 enabled = false;
                 return;
             }
@@ -75,7 +75,7 @@ public class NextWaveButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
 
         if (_tooltipAnimation == null || _hideClip == null)
         {
-            Debug.LogWarning("NextWaveButton::Awake() Tooltip Animation or Clip is missing. Tooltip system disabled.");
+            Debug.LogWarning("NextWaveButton::Awake() _tooltipAnimation or _hideClip is missing. Tooltip system disabled.");
             _isTooltipHidden = true;
         }
     }

@@ -20,6 +20,8 @@ public class EnemyMovementManager : MonoBehaviour
     // (int deactivatedSegmentIndex)
     public event Action<int> OnSegmentDeactivated;
 
+    public event Action OnEnemyReachedBase;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -33,12 +35,12 @@ public class EnemyMovementManager : MonoBehaviour
 
         if (_path == null)
         {
-            Debug.LogError("EnemyMovementManager::Awake() WaypointPath reference is missing!");
+            Debug.LogError("EnemyMovementManager::Awake() _path reference is missing!");
         }
 
         if (_objectPool == null)
         {
-            Debug.LogError("EnemyMovementManager::Awake() ObjectPool reference is missing!");
+            Debug.LogError("EnemyMovementManager::Awake() _objectPool reference is missing!");
         }
 
         InitializeSegments();
@@ -74,7 +76,7 @@ public class EnemyMovementManager : MonoBehaviour
 
         if (_path == null || _path.PointCount < 2)
         {
-            Debug.LogError("EnemyMovementManager::RegisterEnemy() Waypoint path is invalid or has insufficient points!");
+            Debug.LogError("EnemyMovementManager::RegisterEnemy() _path is invalid or has insufficient points!");
             return;
         }
 
@@ -117,7 +119,7 @@ public class EnemyMovementManager : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning("EnemyMovementManager::UnregisterEnemy() ObjectPool or OriginPrefab is missing!");
+                Debug.LogWarning("EnemyMovementManager::UnregisterEnemy() _objectPool or enemy.OriginPrefab is missing!");
                 enemy.gameObject.SetActive(false);
             }
         }
@@ -191,6 +193,7 @@ public class EnemyMovementManager : MonoBehaviour
                     }
                     else
                     {
+                        OnEnemyReachedBase?.Invoke();
                         DespawnEnemy(i, enemy);
                     }
                 }
@@ -212,7 +215,7 @@ public class EnemyMovementManager : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning("EnemyMovementManager::DespawnEnemy() ObjectPool or OriginPrefab reference is missing. Disabling gameObject manually.");
+            Debug.LogWarning("EnemyMovementManager::DespawnEnemy() _objectPool or enemy.OriginPrefab reference is missing. Disabling gameObject manually.");
             enemy.gameObject.SetActive(false);
         }
     }

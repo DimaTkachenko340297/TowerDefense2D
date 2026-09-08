@@ -18,7 +18,7 @@ public class TowerSelectionPanel : MonoBehaviour
 
         if (_selectButtons.Length == 0)
         {
-            Debug.LogWarning("TowerSelectionPanel::Start() didn't find TowerSelectButtons in children");
+            Debug.LogWarning("TowerSelectionPanel::Start() didn't find _selectButtons in children");
             return;
         }
 

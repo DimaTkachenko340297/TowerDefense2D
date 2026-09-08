@@ -11,7 +11,7 @@ public class TowerManager : MonoBehaviour
     {
         if (_buildingManager == null)
         {
-            Debug.LogError("TowerManager::Start() BuildingManager reference is missing!");
+            Debug.LogError("TowerManager::Start() _buildingManager reference is missing!");
             return;
         }
         

@@ -70,7 +70,7 @@ public class TowerSelectButton : MonoBehaviour, IPointerDownHandler
         }
         else
         {
-            Debug.LogWarning("TowerSelectButton::Awake() Image component is missing!");
+            Debug.LogWarning("TowerSelectButton::Awake() _icon component is missing!");
         }
 
         if (_costText != null)
