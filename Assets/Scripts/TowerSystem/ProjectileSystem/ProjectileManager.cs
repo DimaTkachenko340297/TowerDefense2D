@@ -38,7 +38,11 @@ public class ProjectileManager : MonoBehaviour
         instance.transform.rotation = Quaternion.identity;
         
         ActiveProjectile projectile = new ActiveProjectile();
-        projectile.Setup(instance, prefab, target, speed, damage, hitRadius);
+        if (!projectile.Setup(instance, prefab, target, speed, damage, hitRadius))
+        {
+            _objectPool.Release(prefab, instance);
+            return;
+        }
 
         _activeProjectiles.Add(projectile);
     }

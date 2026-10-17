@@ -140,17 +140,16 @@ public class EnemyMovementManager : MonoBehaviour
             for (int i = _activeEnemies.Count - 1; i >= 0; i--)
             {
                 Enemy enemy = _activeEnemies[i];
-                int currentSegment = enemy.CurrentWaypointIndex;
-
-                if (currentSegment >= _path.PointCount - 1)
-                {
-                    DespawnEnemy(i, enemy);
-                    continue;
-                }
-
                 if (enemy == null || !enemy.gameObject.activeInHierarchy)
                 {
                     _activeEnemies.RemoveAt(i);
+                    continue;
+                }
+
+                int currentSegment = enemy.CurrentWaypointIndex;
+                if (currentSegment >= _path.PointCount - 1)
+                {
+                    DespawnEnemy(i, enemy);
                     continue;
                 }
 
@@ -208,6 +207,15 @@ public class EnemyMovementManager : MonoBehaviour
     private void DespawnEnemy(int index, Enemy enemy)
     {
         _activeEnemies.RemoveAt(index);
+
+        int currentSegment = enemy.CurrentWaypointIndex;
+        if (currentSegment < _enemiesPerSegment.Length && _enemiesPerSegment[currentSegment].Remove(enemy))
+        {
+            if (_enemiesPerSegment[currentSegment].Count == 0)
+            {
+                OnSegmentDeactivated?.Invoke(currentSegment);
+            }
+        }
 
         if (_objectPool != null && enemy.OriginPrefab != null)
         {

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public struct ActiveProjectile
+public class ActiveProjectile
 {
     public GameObject GameObject { get; private set; }
     public GameObject OriginPrefab { get; private set; }
