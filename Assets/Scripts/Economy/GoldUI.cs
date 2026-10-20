@@ -1,31 +1,43 @@
-
-
-using UnityEngine;
 using TMPro;
+using UnityEngine;
+using VContainer;
 
 public class GoldUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text _goldText;
-    private void Start()
+    private IGoldProvider _goldProvider;
+
+    [Inject]
+    private void Construct(IGoldProvider goldProvider)
+    {
+        _goldProvider = goldProvider;
+    }
+
+    private void OnEnable()
     {
         if (_goldText == null)
         {
-            Debug.LogError("GoldUI::Start() _goldText reference is missing!");
-            Destroy(this);
+            Debug.LogError("GoldUI::OnEnable() _goldText reference is missing!");
+            enabled = false;
+            return;
         }
 
-        if (GoldManager.Instance != null)
+        if (_goldProvider == null)
         {
-            GoldManager.Instance.OnGoldChanged += UpdateGoldText;
-            UpdateGoldText(GoldManager.Instance.CurrentGold);
+            Debug.LogError("GoldUI::OnEnable() IGoldProvider was not injected!");
+            enabled = false;
+            return;
         }
+
+        _goldProvider.OnGoldChanged += UpdateGoldText;
+        UpdateGoldText(_goldProvider.CurrentGold);
     }
 
     private void OnDisable()
     {
-        if (GoldManager.Instance != null)
+        if (_goldProvider != null)
         {
-            GoldManager.Instance.OnGoldChanged -= UpdateGoldText;
+            _goldProvider.OnGoldChanged -= UpdateGoldText;
         }
     }
 

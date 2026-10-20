@@ -2,35 +2,24 @@ using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class GameModeManager : MonoBehaviour
+public class GameModeManager : IDisposable
 {
-    [SerializeField] private BaseHealth _baseHealth;
-
-    public GameState _currentState = GameState.Active;
+    private readonly BaseHealth _baseHealth;
+    private GameState _currentState = GameState.Active;
     public GameState CurrentState => _currentState;
 
-    // (GameState newState)
-    public Action<GameState> OnStateChanged;
-
-    private void Start()
+    public GameModeManager(BaseHealth baseHealth)
     {
-        if (_baseHealth == null)
-        {
-            Debug.LogError("GameModeManager::Start() _baseHealth reference is missing!");
-            Destroy(this);
-            return;
-        }
-
+        _baseHealth = baseHealth ?? throw new ArgumentNullException(nameof(baseHealth));
         _baseHealth.OnBaseDestroyed += HandleBaseDestroyed;
-        OnStateChanged?.Invoke(_currentState);
     }
 
-    private void OnDisable()
+    // (GameState newState)
+    public event Action<GameState> OnStateChanged;
+
+    public void Dispose()
     {
-        if (_baseHealth != null)
-        {
-            _baseHealth.OnBaseDestroyed -= HandleBaseDestroyed;
-        }
+        _baseHealth.OnBaseDestroyed -= HandleBaseDestroyed;
     }
 
     public void SetState(GameState newState)
@@ -42,14 +31,7 @@ public class GameModeManager : MonoBehaviour
 
         _currentState = newState;
 
-        if (_currentState == GameState.Active)
-        {
-            Time.timeScale = 1f;
-        }
-        else
-        {
-            Time.timeScale = 0f;
-        }
+        Time.timeScale = _currentState == GameState.Active ? 1f : 0f;
 
         OnStateChanged?.Invoke(_currentState);
     }

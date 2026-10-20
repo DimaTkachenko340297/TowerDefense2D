@@ -5,9 +5,9 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.Tilemaps;
+using VContainer;
 
 
-[RequireComponent(typeof(ObjectPool))]
 public class BuildingManager : MonoBehaviour
 {
     // (Tower placedTower)
@@ -18,12 +18,22 @@ public class BuildingManager : MonoBehaviour
     private Dictionary<Vector3Int, GameObject> _occupiedTiles = new();
     private ObjectPool _objectPool;
     private Camera _mainCamera;
+    private IGoldProvider _goldProvider;
+    private IGoldWallet _goldWallet;
 
     [Header("Preview Tower")]
     [SerializeField] private GameObject _ghostTowerPrefab;
     private GameObject _ghostTower;
     private SpriteRenderer _ghostSpriteRenderer;
     private TowerPlacementPreview _ghostPlacementPreview;
+
+    [Inject]
+    private void Construct(IGoldProvider goldProvider, IGoldWallet goldWallet, ObjectPool objectPool)
+    {
+        _goldProvider = goldProvider;
+        _goldWallet = goldWallet;
+        _objectPool = objectPool;
+    }
 
     private void Start()
     {
@@ -53,7 +63,6 @@ public class BuildingManager : MonoBehaviour
         }
 
         _selectionPanel.OnTowerSelected += StartPlacement;
-        _objectPool = GetComponent<ObjectPool>();
 
         if (_ghostTowerPrefab == null)
         {
@@ -75,14 +84,14 @@ public class BuildingManager : MonoBehaviour
 
     private IEnumerator ProcessPlacementPreviewRoutine(GameObject towerPrefab, int cost)
     {
-        if (GoldManager.Instance == null)
+        if (_goldProvider == null || _goldWallet == null)
         {
-            Debug.LogWarning("BuildingManager::ProcessPlacementPreviewRoutine() received null GoldManager.Instance");
+            Debug.LogWarning("BuildingManager::ProcessPlacementPreviewRoutine() gold services were not injected");
             StopPlacement();
             yield break;
         }
 
-        if (GoldManager.Instance.CurrentGold < cost)
+        if (_goldProvider.CurrentGold < cost)
         {
             StopPlacement();
             yield break;
@@ -125,7 +134,7 @@ public class BuildingManager : MonoBehaviour
 
             _ghostTower.transform.position = offsetPosition;
 
-            bool isValidTile = GoldManager.Instance.HasEnoughGold(cost) && _placementMap.HasTile(cellPosition) && !_occupiedTiles.ContainsKey(cellPosition);
+            bool isValidTile = _goldWallet.HasEnoughGold(cost) && _placementMap.HasTile(cellPosition) && !_occupiedTiles.ContainsKey(cellPosition);
             _ghostPlacementPreview.IsValid = isValidTile;
 
             if (Mouse.current.leftButton.wasPressedThisFrame)
@@ -138,7 +147,7 @@ public class BuildingManager : MonoBehaviour
 
                 if (isValidTile)
                 {
-                    GoldManager.Instance.TakeGold(cost);
+                    _goldWallet.TakeGold(cost);
                     _occupiedTiles[cellPosition] = towerPrefab;
                     GameObject tower = _objectPool.Get(towerPrefab);
                     tower.transform.position = offsetPosition;

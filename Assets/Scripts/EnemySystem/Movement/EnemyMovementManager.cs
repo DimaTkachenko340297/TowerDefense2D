@@ -2,13 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using VContainer;
 
-public class EnemyMovementManager : MonoBehaviour
+public class EnemyMovementManager : MonoBehaviour, IEnemyRegistry, IEnemyRouteTracker, IEnemyBaseArrivalSource
 {
-    public static EnemyMovementManager Instance { get; private set; }
     [SerializeField] private WaypointPath _path;
     public WaypointPath Path => _path;
-    [SerializeField] private ObjectPool _objectPool;
+    private ObjectPool _objectPool;
+    private IGoldWallet _goldWallet;
 
     private readonly List<Enemy> _activeEnemies = new List<Enemy>();
     public IReadOnlyList<Enemy> ActiveEnemies => _activeEnemies;
@@ -22,17 +23,15 @@ public class EnemyMovementManager : MonoBehaviour
 
     public event Action OnEnemyReachedBase;
 
+    [Inject]
+    private void Construct(IGoldWallet goldWallet, ObjectPool objectPool)
+    {
+        _goldWallet = goldWallet;
+        _objectPool = objectPool;
+    }
+
     private void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Debug.LogWarning("EnemyMovementManager::Awake() Duplicate instance detected! Destroying component.");
-            Destroy(this);
-            return;
-        }
-
-        Instance = this;
-
         if (_path == null)
         {
             Debug.LogError("EnemyMovementManager::Awake() _path reference is missing!");
@@ -48,6 +47,12 @@ public class EnemyMovementManager : MonoBehaviour
 
     private void InitializeSegments()
     {
+        if (_path == null || _path.PointCount < 2)
+        {
+            _enemiesPerSegment = Array.Empty<List<Enemy>>();
+            return;
+        }
+
         int segmentCount = _path.PointCount - 1;
         _enemiesPerSegment = new List<Enemy>[segmentCount];
         for (int i = 0; i < segmentCount; i++)
@@ -56,7 +61,7 @@ public class EnemyMovementManager : MonoBehaviour
         }
     }
 
-    public List<Enemy> GetEnemiesOnSegment(int segmentIndex)
+    public IReadOnlyList<Enemy> GetEnemiesOnSegment(int segmentIndex)
     {
         if (segmentIndex < 0 || segmentIndex >= _enemiesPerSegment.Length)
         {
@@ -89,6 +94,11 @@ public class EnemyMovementManager : MonoBehaviour
         {
             _activeEnemies.Add(enemy);
             _enemiesPerSegment[0].Add(enemy);
+
+            if (_enemiesPerSegment[0].Count == 1)
+            {
+                OnSegmentActivated?.Invoke(0);
+            }
         }
 
         if (_movementCoroutine == null)
@@ -106,13 +116,12 @@ public class EnemyMovementManager : MonoBehaviour
 
         enemy.OnDied -= UnregisterEnemy;
 
-        if (GoldManager.Instance != null)
-        {
-            GoldManager.Instance.AddGold(enemy.GoldPerKill);
-        }
+        _goldWallet.AddGold(enemy.GoldPerKill);
 
         if (_activeEnemies.Remove(enemy))
         {
+            enemy.NotifyDespawned();
+
             if (_objectPool != null && enemy.OriginPrefab != null)
             {
                 _objectPool.Release(enemy.OriginPrefab, enemy.gameObject);
@@ -125,9 +134,12 @@ public class EnemyMovementManager : MonoBehaviour
         }
 
         int segment = enemy.CurrentWaypointIndex;
-        if (segment < _enemiesPerSegment.Length)
+        if (segment >= 0 && segment < _enemiesPerSegment.Length && _enemiesPerSegment[segment].Remove(enemy))
         {
-            _enemiesPerSegment[segment].Remove(enemy);
+            if (_enemiesPerSegment[segment].Count == 0)
+            {
+                OnSegmentDeactivated?.Invoke(segment);
+            }
         }
     }
 
@@ -140,8 +152,16 @@ public class EnemyMovementManager : MonoBehaviour
             for (int i = _activeEnemies.Count - 1; i >= 0; i--)
             {
                 Enemy enemy = _activeEnemies[i];
-                if (enemy == null || !enemy.gameObject.activeInHierarchy)
+                if (enemy == null)
                 {
+                    _activeEnemies.RemoveAt(i);
+                    continue;
+                }
+
+                if (!enemy.gameObject.activeInHierarchy)
+                {
+                    enemy.OnDied -= UnregisterEnemy;
+                    enemy.NotifyDespawned();
                     _activeEnemies.RemoveAt(i);
                     continue;
                 }
@@ -207,6 +227,8 @@ public class EnemyMovementManager : MonoBehaviour
     private void DespawnEnemy(int index, Enemy enemy)
     {
         _activeEnemies.RemoveAt(index);
+        enemy.OnDied -= UnregisterEnemy;
+        enemy.NotifyDespawned();
 
         int currentSegment = enemy.CurrentWaypointIndex;
         if (currentSegment < _enemiesPerSegment.Length && _enemiesPerSegment[currentSegment].Remove(enemy))

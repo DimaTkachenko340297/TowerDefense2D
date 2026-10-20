@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
+using VContainer;
+using VContainer.Unity;
 
 [System.Serializable]
 public struct PoolConfig
@@ -8,51 +10,89 @@ public struct PoolConfig
     [field: SerializeField] public int PrewarmCount { get; private set; }
 }
 
+[System.Serializable]
+public struct PoolGroup
+{
+    [field: SerializeField] public string Header { get; private set; }
+    [field: SerializeField] public List<PoolConfig> Configs { get; private set; }
+}
+
 public class ObjectPool : MonoBehaviour
 {
-    [SerializeField] private List<PoolConfig> _poolsConfig;
+    [SerializeField] private List<PoolGroup> _poolGroups;
 
     private readonly Dictionary<GameObject, Queue<GameObject>> _poolDictionary = new Dictionary<GameObject, Queue<GameObject>>();
+    private readonly Dictionary<GameObject, Transform> _groupRoots = new Dictionary<GameObject, Transform>();
+    private IObjectResolver _resolver;
 
-    private void Awake()
+    [Inject]
+    private void Construct(IObjectResolver resolver)
+    {
+        _resolver = resolver;
+    }
+
+    private void Start()
     {
         InitializePools();
     }
 
     private void InitializePools()
     {
-        if (_poolsConfig == null)
+        if (_poolGroups == null)
         {
-            Debug.LogError("ObjectPool::InitializePools() _poolsConfig reference is missing!");
+            Debug.LogError("ObjectPool::InitializePools() _poolGroups reference is missing!");
             return;
         }
 
-        foreach (PoolConfig config in _poolsConfig)
+        for (int groupIndex = 0; groupIndex < _poolGroups.Count; groupIndex++)
         {
-            if (config.Prefab == null)
+            PoolGroup group = _poolGroups[groupIndex];
+
+            if (group.Configs == null)
             {
-                Debug.LogWarning("ObjectPool::InitializePools() Prefab reference in PoolConfig is null!");
+                Debug.LogWarning($"ObjectPool::InitializePools() Configs list in group at index {groupIndex} is missing!");
                 continue;
             }
 
-            Queue<GameObject> objectPool = new Queue<GameObject>();
+            Transform groupRoot = CreateGroupRoot(group.Header, groupIndex);
 
-            for (int i = 0; i < config.PrewarmCount; i++)
+            foreach (PoolConfig config in group.Configs)
             {
-                GameObject instance = Instantiate(config.Prefab, transform);
-                instance.SetActive(false);
-                objectPool.Enqueue(instance);
-            }
+                if (config.Prefab == null)
+                {
+                    Debug.LogWarning($"ObjectPool::InitializePools() Prefab reference in PoolConfig is null (group '{groupRoot.name}')!");
+                    continue;
+                }
 
-            if (!_poolDictionary.ContainsKey(config.Prefab))
-            {
+                if (_poolDictionary.ContainsKey(config.Prefab))
+                {
+                    Debug.LogWarning($"ObjectPool::InitializePools() Duplicate entry found for prefab '{config.Prefab.name}' in pool configuration (group '{groupRoot.name}')!");
+                    continue;
+                }
+
+                Queue<GameObject> objectPool = new Queue<GameObject>();
+
+                for (int i = 0; i < config.PrewarmCount; i++)
+                {
+                    GameObject instance = _resolver.Instantiate(config.Prefab, groupRoot);
+                    instance.SetActive(false);
+                    objectPool.Enqueue(instance);
+                }
+
                 _poolDictionary.Add(config.Prefab, objectPool);
-            }
-            else
-            {
-                Debug.LogWarning($"ObjectPool::InitializePools() Duplicate entry found for prefab '{config.Prefab.name}' in pool configuration!");
+                _groupRoots.Add(config.Prefab, groupRoot);
             }
         }
+    }
+
+    private Transform CreateGroupRoot(string header, int groupIndex)
+    {
+        string rootName = string.IsNullOrWhiteSpace(header) ? $"Group {groupIndex}" : header;
+
+        Transform groupRoot = new GameObject(rootName).transform;
+        groupRoot.SetParent(transform, false);
+
+        return groupRoot;
     }
 
     public GameObject Get(GameObject prefab)
@@ -63,13 +103,11 @@ public class ObjectPool : MonoBehaviour
             return null;
         }
 
-        if (!_poolDictionary.ContainsKey(prefab))
+        if (!_poolDictionary.TryGetValue(prefab, out Queue<GameObject> pool))
         {
             Debug.LogWarning($"ObjectPool::Get() Prefab '{prefab.name}' was not found in _poolDictionary. Instantiating manually.");
-            return Instantiate(prefab);
+            return CreateInstance(prefab);
         }
-
-        Queue<GameObject> pool = _poolDictionary[prefab];
 
         if (pool.Count > 0)
         {
@@ -77,10 +115,15 @@ public class ObjectPool : MonoBehaviour
             poolObject.SetActive(true);
             return poolObject;
         }
-        else
-        {
-            return Instantiate(prefab, transform);
-        }
+
+        return CreateInstance(prefab);
+    }
+
+    private GameObject CreateInstance(GameObject prefab)
+    {
+        Transform parent = _groupRoots.TryGetValue(prefab, out Transform groupRoot) ? groupRoot : transform;
+
+        return _resolver.Instantiate(prefab, parent);
     }
 
     public void Release(GameObject prefab, GameObject instance)

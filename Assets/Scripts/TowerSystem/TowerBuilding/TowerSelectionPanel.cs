@@ -1,13 +1,21 @@
 using UnityEngine;
 using System;
+using VContainer;
 
 
 public class TowerSelectionPanel : MonoBehaviour
 {
     private TowerSelectButton[] _selectButtons;
     private TowerSelectButton _currentButton;
+    private IGoldProvider _goldProvider;
     // (GameObject towerPrefabe, int cost)
     public Action<GameObject, int> OnTowerSelected;
+    [Inject]
+    private void Construct(IGoldProvider goldProvider)
+    {
+        _goldProvider = goldProvider;
+    }
+
     private void Start()
     {
         _selectButtons = GetComponentsInChildren<TowerSelectButton>();
@@ -27,10 +35,10 @@ public class TowerSelectionPanel : MonoBehaviour
             button.OnButtonSelected += HandleTowerSelection;
         }
 
-        if (GoldManager.Instance != null)
+        if (_goldProvider != null)
         {
-            GoldManager.Instance.OnGoldChanged += RefreshButtonsAvailability;
-            RefreshButtonsAvailability(GoldManager.Instance.CurrentGold);
+            _goldProvider.OnGoldChanged += RefreshButtonsAvailability;
+            RefreshButtonsAvailability(_goldProvider.CurrentGold);
         }
     }
 
@@ -46,9 +54,9 @@ public class TowerSelectionPanel : MonoBehaviour
             button.OnButtonSelected -= HandleTowerSelection;
         }
 
-        if (GoldManager.Instance != null)
+        if (_goldProvider != null)
         {
-            GoldManager.Instance.OnGoldChanged -= RefreshButtonsAvailability;
+            _goldProvider.OnGoldChanged -= RefreshButtonsAvailability;
         }
     }
 

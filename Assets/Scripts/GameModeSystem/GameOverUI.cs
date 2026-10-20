@@ -1,10 +1,20 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using VContainer;
 
 public class GameOverUI : MonoBehaviour
 {
-    [SerializeField] private GameModeManager _gameModeManager;
+    private GameModeManager _gameModeManager;
+    private bool _isSubscribedToGameMode;
+
+    [Inject]
+    private void Construct(GameModeManager gameModeManager)
+    {
+        _gameModeManager = gameModeManager;
+        SubscribeToGameMode();
+    }
+
     [SerializeField] private EnemySpawner _enemySpawner;
 
     [Header("UI References")]
@@ -25,14 +35,7 @@ public class GameOverUI : MonoBehaviour
             return;
         }
 
-        if (_gameModeManager != null)
-        {
-            _gameModeManager.OnStateChanged += HandleStateChanged;
-        }
-        else
-        {
-            Debug.LogError("GameOverUI::OnEnable() _gameModeManager reference is missing!");
-        }
+        SubscribeToGameMode();
     }
 
     private void OnDisable()
@@ -42,10 +45,23 @@ public class GameOverUI : MonoBehaviour
             _restartButton.onClick.RemoveListener(HandleRestartButtonClicked);
         }
 
-        if (_gameModeManager != null)
+        if (_isSubscribedToGameMode)
         {
             _gameModeManager.OnStateChanged -= HandleStateChanged;
+            _isSubscribedToGameMode = false;
         }
+    }
+
+    private void SubscribeToGameMode()
+    {
+        if (!isActiveAndEnabled || _gameModeManager == null || _isSubscribedToGameMode)
+        {
+            return;
+        }
+
+        _gameModeManager.OnStateChanged += HandleStateChanged;
+        _isSubscribedToGameMode = true;
+        HandleStateChanged(_gameModeManager.CurrentState);
     }
 
     private void HandleRestartButtonClicked()

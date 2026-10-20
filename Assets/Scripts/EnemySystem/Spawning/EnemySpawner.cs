@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using VContainer;
 
 [System.Serializable]
 public struct EnemyWave
@@ -13,7 +14,7 @@ public struct EnemyWave
 public class EnemySpawner : MonoBehaviour
 {
     [Header("Pool System")]
-    [SerializeField] private ObjectPool _objectPool;
+    private ObjectPool _objectPool;
 
     [Header("Waves Systems")]
     [SerializeField] private List<EnemyWave> _listWaves;
@@ -45,6 +46,14 @@ public class EnemySpawner : MonoBehaviour
     private int _wavesCount = 0;
     public int WavesCount => _wavesCount;
     private bool _isSpawning;
+    private IEnemyRegistry _enemyRegistry;
+
+    [Inject]
+    private void Construct(IEnemyRegistry enemyRegistry, ObjectPool objectPool)
+    {
+        _enemyRegistry = enemyRegistry;
+        _objectPool = objectPool;
+    }
 
     private void Awake()
     {
@@ -59,7 +68,7 @@ public class EnemySpawner : MonoBehaviour
     {
         if (_objectPool == null)
         {
-            Debug.LogError("EnemySpawner::Start() _objectPool reference was not assigned in Inspector!");
+            Debug.LogError("EnemySpawner::Start() ObjectPool was not injected!");
             gameObject.SetActive(false);
             return;
         }
@@ -162,14 +171,13 @@ public class EnemySpawner : MonoBehaviour
         {
             enemy.OriginPrefab = enemyPrefab;
 
-            if (EnemyMovementManager.Instance != null)
+            if (_enemyRegistry == null)
             {
-                EnemyMovementManager.Instance.RegisterEnemy(enemy);
+                Debug.LogError("EnemySpawner::SpawnSingleEnemy() IEnemyRegistry was not injected!");
+                return;
             }
-            else
-            {
-                Debug.LogError("EnemySpawner::SpawnSingleEnemy() EnemyMovementManager.Instance is null!");
-            }
+
+            _enemyRegistry.RegisterEnemy(enemy);
         }
         else
         {

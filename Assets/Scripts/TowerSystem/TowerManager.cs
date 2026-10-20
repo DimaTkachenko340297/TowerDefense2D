@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(ObjectPool))]
 public class TowerManager : MonoBehaviour
 {
     [SerializeField] private BuildingManager _buildingManager;

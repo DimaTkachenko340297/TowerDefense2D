@@ -17,6 +17,8 @@ public class Enemy : MonoBehaviour
     }
     // (Enemy thisEnemy)
     public event Action<Enemy> OnDied;
+    // (Enemy thisEnemy)
+    public event Action<Enemy> OnDespawned;
 
     [SerializeField] private float _maxHealth = 100f;
     private float _currentHealth;
@@ -57,6 +59,14 @@ public class Enemy : MonoBehaviour
         LerpProgress = 0f;
         _currentHealth = _maxHealth;
         OnDied = null;
+        OnDespawned = null;
+    }
+
+    public void NotifyDespawned()
+    {
+        Action<Enemy> handlers = OnDespawned;
+        OnDespawned = null;
+        handlers?.Invoke(this);
     }
 
     public void TakeDamage(float amount)

@@ -1,9 +1,18 @@
 using UnityEngine;
 using UnityEngine.UI;
+using VContainer;
 
 public class PauseMenuUI : MonoBehaviour
 {
-    [SerializeField] private GameModeManager _gameModeManager;
+    private GameModeManager _gameModeManager;
+    private bool _isSubscribedToGameMode;
+
+    [Inject]
+    private void Construct(GameModeManager gameModeManager)
+    {
+        _gameModeManager = gameModeManager;
+        SubscribeToGameMode();
+    }
 
     [Header("Buttons")]
     [SerializeField] private Button _pauseButton;
@@ -32,14 +41,7 @@ public class PauseMenuUI : MonoBehaviour
             Debug.LogWarning("PauseMenuUI::OnEnable() _resumeButton reference is missing!");
         }
 
-        if (_gameModeManager != null)
-        {
-            _gameModeManager.OnStateChanged += HandleStateChanged;
-        }
-        else
-        {
-            Debug.LogError("PauseMenuUI::OnEnable() _gameModeManager reference is missing!");
-        }
+        SubscribeToGameMode();
     }
 
     private void OnDisable()
@@ -54,10 +56,23 @@ public class PauseMenuUI : MonoBehaviour
             _resumeButton.onClick.RemoveListener(HandleResumeButtonClicked);
         }
 
-        if (_gameModeManager != null)
+        if (_isSubscribedToGameMode)
         {
             _gameModeManager.OnStateChanged -= HandleStateChanged;
+            _isSubscribedToGameMode = false;
         }
+    }
+
+    private void SubscribeToGameMode()
+    {
+        if (!isActiveAndEnabled || _gameModeManager == null || _isSubscribedToGameMode)
+        {
+            return;
+        }
+
+        _gameModeManager.OnStateChanged += HandleStateChanged;
+        _isSubscribedToGameMode = true;
+        HandleStateChanged(_gameModeManager.CurrentState);
     }
 
     private void HandlePauseButtonClicked()

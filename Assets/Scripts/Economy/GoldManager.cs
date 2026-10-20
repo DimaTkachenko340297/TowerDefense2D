@@ -1,32 +1,17 @@
 using System;
 using UnityEngine;
 
-public class GoldManager : MonoBehaviour
+public class GoldManager : IGoldProvider, IGoldWallet
 {
-    public static GoldManager Instance { get; private set; }
-    [SerializeField] private int _initialGold = 100;
-    
     private int _currentGold;
     public int CurrentGold => _currentGold;
 
     // (int newValue)
     public event Action<int> OnGoldChanged;
 
-    private void Awake()
+    public GoldManager(int initialGold)
     {
-        if (Instance != null && Instance != this)
-        {
-            Debug.LogWarning("GoldManager::Awake() Duplicate instance detected! Destroying component.");
-            Destroy(this);
-            return;
-        }
-        Instance = this;
-    }
-
-    private void Start()
-    {
-        _currentGold = _initialGold;
-        OnGoldChanged?.Invoke(_currentGold);
+        _currentGold = initialGold;
     }
 
     public bool AddGold(int amount)

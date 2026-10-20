@@ -1,37 +1,31 @@
 using System;
-using UnityEngine;
 
-public class BaseHealth : MonoBehaviour
+public class BaseHealth : IDisposable
 {
-    [SerializeField, Min(1)] private int _initializeHealth;
+    private readonly IEnemyBaseArrivalSource _enemyBaseArrivalSource;
     private int _currentHealth;
-    public int CurrentHealth => _currentHealth;
 
-    // (int newHealthValue)
-    public Action<int> OnBaseHealthChanged;
-    public Action OnBaseDestroyed;
-
-    private void Start()
+    public int CurrentHealth
     {
-        _currentHealth = _initializeHealth;
-        OnBaseHealthChanged?.Invoke(_currentHealth);
-
-        if (EnemyMovementManager.Instance == null)
-        {
-            Debug.LogError("BaseHealth::Start() EnemyMovementManager.Instance reference is missing!");
-            Destroy(this);
-            return;
-        }
-
-        EnemyMovementManager.Instance.OnEnemyReachedBase += TakeDamage;
+        get => _currentHealth;
+        private set => _currentHealth = value;
     }
 
-    private void OnDisable()
+    // (int newHealthValue)
+    public event Action<int> OnBaseHealthChanged;
+    public event Action OnBaseDestroyed;
+
+    public BaseHealth(IEnemyBaseArrivalSource enemyBaseArrivalSource, int initialHealth)
     {
-        if (EnemyMovementManager.Instance != null)
-        {
-            EnemyMovementManager.Instance.OnEnemyReachedBase -= TakeDamage;
-        }
+        _enemyBaseArrivalSource = enemyBaseArrivalSource;
+        _currentHealth = Math.Max(initialHealth, 1);
+
+        _enemyBaseArrivalSource.OnEnemyReachedBase += TakeDamage;
+    }
+
+    public void Dispose()
+    {
+        _enemyBaseArrivalSource.OnEnemyReachedBase -= TakeDamage;
     }
 
     private void TakeDamage()

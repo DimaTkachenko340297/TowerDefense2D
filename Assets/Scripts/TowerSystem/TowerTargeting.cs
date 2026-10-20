@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using VContainer;
 
 [RequireComponent(typeof(Tower))]
 public class TowerTargeting : MonoBehaviour
@@ -31,8 +32,15 @@ public class TowerTargeting : MonoBehaviour
     
     private readonly List<int> _coveredSegmentIndices = new List<int>();
     private readonly List<ProgressInterval> _coveredIntervals = new List<ProgressInterval>();
+    private IEnemyRouteTracker _enemyRouteTracker;
 
     public float AttackRange => _attackRange;
+
+    [Inject]
+    private void Construct(IEnemyRouteTracker enemyRouteTracker)
+    {
+        _enemyRouteTracker = enemyRouteTracker;
+    }
 
     private void Start()
     {
@@ -44,13 +52,13 @@ public class TowerTargeting : MonoBehaviour
         _coveredSegmentIndices.Clear();
         _coveredIntervals.Clear();
         
-        if (EnemyMovementManager.Instance == null)
+        if (_enemyRouteTracker == null)
         {
-            Debug.LogError("TowerTargeting::BakeTargetingData() EnemyMovementManager.Instance is missing!");
+            Debug.LogError("TowerTargeting::BakeTargetingData() IEnemyRouteTracker was not injected!");
             return;
         }
 
-        WaypointPath path = EnemyMovementManager.Instance.Path;
+        WaypointPath path = _enemyRouteTracker.Path;
         if (path == null)
         {
             Debug.LogError("TowerTargeting::BakeTargetingData() WaypointPath reference is missing in EnemyMovementManager!");
@@ -78,19 +86,19 @@ public class TowerTargeting : MonoBehaviour
 
     private void OnEnable()
     {
-        if (EnemyMovementManager.Instance != null)
+        if (_enemyRouteTracker != null)
         {
-            EnemyMovementManager.Instance.OnSegmentActivated += HandleSegmentActivated;
-            EnemyMovementManager.Instance.OnSegmentDeactivated += HandleSegmentDeactivated;
+            _enemyRouteTracker.OnSegmentActivated += HandleSegmentActivated;
+            _enemyRouteTracker.OnSegmentDeactivated += HandleSegmentDeactivated;
         }
     }
 
     private void OnDisable()
     {
-        if (EnemyMovementManager.Instance != null)
+        if (_enemyRouteTracker != null)
         {
-            EnemyMovementManager.Instance.OnSegmentActivated -= HandleSegmentActivated;
-            EnemyMovementManager.Instance.OnSegmentDeactivated -= HandleSegmentDeactivated;
+            _enemyRouteTracker.OnSegmentActivated -= HandleSegmentActivated;
+            _enemyRouteTracker.OnSegmentDeactivated -= HandleSegmentDeactivated;
         }
     }
 
@@ -126,16 +134,16 @@ public class TowerTargeting : MonoBehaviour
 
     public Enemy GetFirstTarget()
     {
-        if (EnemyMovementManager.Instance == null)
+        if (_enemyRouteTracker == null)
         {
-            Debug.LogError("TowerTargeting::GetFirstTarget() EnemyMovementManager.Instance is missing!");
+            Debug.LogError("TowerTargeting::GetFirstTarget() IEnemyRouteTracker was not injected!");
             return null;
         }
 
         for (int i = 0; i < _coveredSegmentIndices.Count; i++)
         {
             int segmentIndex = _coveredSegmentIndices[i];
-            List<Enemy> segmentEnemies = EnemyMovementManager.Instance.GetEnemiesOnSegment(segmentIndex);
+            IReadOnlyList<Enemy> segmentEnemies = _enemyRouteTracker.GetEnemiesOnSegment(segmentIndex);
 
             if (segmentEnemies == null || segmentEnemies.Count == 0)
             {
@@ -176,6 +184,19 @@ public class TowerTargeting : MonoBehaviour
         float a = Vector3.Dot(d, d);
         float b = 2f * Vector3.Dot(f, d);
         float c = Vector3.Dot(f, f) - (radius * radius);
+
+        // A zero-length route segment is either fully inside the circle or fully outside it.
+        if (a <= Mathf.Epsilon)
+        {
+            if (c <= 0f)
+            {
+                tMin = 0f;
+                tMax = 1f;
+                return true;
+            }
+
+            return false;
+        }
 
         float discriminant = (b * b) - (4f * a * c);
 

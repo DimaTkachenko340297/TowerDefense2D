@@ -1,6 +1,7 @@
+using System;
 using UnityEngine;
 
-public class ActiveProjectile
+public class ActiveProjectile : IDisposable
 {
     public GameObject GameObject { get; private set; }
     public GameObject OriginPrefab { get; private set; }
@@ -10,9 +11,10 @@ public class ActiveProjectile
     private Vector3 _lastKnownTargetPosition;
     private float _speed;
     private float _damage;
-    private float _hitRadiusSqr;
 
-    public bool Setup(GameObject instance, GameObject originPrefab, Enemy target, float speed, float damage, float hitRadius)
+    private bool _arrived;
+
+    public bool Setup(GameObject instance, GameObject originPrefab, Enemy target, float speed, float damage)
     {
         if (instance == null)
         {
@@ -23,12 +25,6 @@ public class ActiveProjectile
         if (speed <= 0f)
         {
             Debug.LogError($"ActiveProjectile::Setup() Speed must be greater than zero! Received: {speed}");
-            return false;
-        }
-
-        if (hitRadius <= 0f)
-        {
-            Debug.LogError($"ActiveProjectile::Setup() HitRadius must be greater than zero! Received: {hitRadius}");
             return false;
         }
 
@@ -48,11 +44,11 @@ public class ActiveProjectile
         _target = target;
         _speed = speed;
         _damage = damage;
-        _hitRadiusSqr = hitRadius * hitRadius;
 
         if (_target != null)
         {
             _lastKnownTargetPosition = _target.transform.position;
+            _target.OnDespawned += HandleTargetDespawned;
         }
 
         return true;
@@ -71,22 +67,24 @@ public class ActiveProjectile
             _lastKnownTargetPosition = _target.transform.position;
         }
 
-        Vector3 currentPos = _transform.position;
-        Vector3 direction = _lastKnownTargetPosition - currentPos;
-        
-        float distanceSqr = direction.sqrMagnitude;
-        float moveDistance = _speed * deltaTime;
-
-        if (distanceSqr <= _hitRadiusSqr || distanceSqr <= (moveDistance * moveDistance))
+        if (_arrived)
         {
             HitTarget();
             return true;
         }
 
-        Vector3 moveVector = direction.normalized * moveDistance;
-        _transform.position += moveVector;
-        _transform.right = direction;
+        Vector3 direction = _lastKnownTargetPosition - _transform.position;
+        float step = _speed * deltaTime;
 
+        if (direction.sqrMagnitude <= step * step)
+        {
+            _transform.position = _lastKnownTargetPosition;
+            _arrived = true;
+            return false;
+        }
+
+        _transform.position += direction.normalized * step;
+        _transform.right = direction;
         return false;
     }
 
@@ -95,6 +93,27 @@ public class ActiveProjectile
         if (_target != null && _target.gameObject.activeInHierarchy)
         {
             _target.TakeDamage(_damage);
+        }
+    }
+
+    private void HandleTargetDespawned(Enemy enemy)
+    {
+        if (_target != enemy)
+        {
+            return;
+        }
+
+        _lastKnownTargetPosition = enemy.transform.position;
+        _target.OnDespawned -= HandleTargetDespawned;
+        _target = null;
+    }
+
+    public void Dispose()
+    {
+        if (_target != null)
+        {
+            _target.OnDespawned -= HandleTargetDespawned;
+            _target = null;
         }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using VContainer;
 
 [RequireComponent(typeof(TowerTargeting))]
 public class Tower : MonoBehaviour
@@ -13,7 +14,14 @@ public class Tower : MonoBehaviour
     [SerializeField] private float _damage = 25f;
 
     private TowerTargeting _targeting;
+    private ProjectileManager _projectileManager;
     private float _nextFireTime;
+
+    [Inject]
+    private void Construct(ProjectileManager projectileManager)
+    {
+        _projectileManager = projectileManager;
+    }
 
     private void Awake()
     {
@@ -61,7 +69,13 @@ public class Tower : MonoBehaviour
             return;
         }
 
-        ProjectileManager.Instance.SpawnProjectile(
+        if (_projectileManager == null)
+        {
+            Debug.LogError("Tower::Shoot() ProjectileManager was not injected!");
+            return;
+        }
+
+        _projectileManager.SpawnProjectile(
             _projectilePrefab, 
             transform.position, 
             target, 

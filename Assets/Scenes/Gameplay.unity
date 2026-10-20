@@ -613,7 +613,6 @@ GameObject:
   - component: {fileID: 390961639}
   - component: {fileID: 390961638}
   - component: {fileID: 390961641}
-  - component: {fileID: 390961640}
   m_Layer: 0
   m_Name: TowerManager
   m_TagString: Untagged
@@ -643,30 +642,13 @@ Transform:
   m_GameObject: {fileID: 390961637}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.70459, y: 0.04374, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 957946380}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &390961640
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 390961637}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 051480f225dc1bd41b3a7fe24781cd73, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ObjectPool
-  _poolsConfig:
-  - <Prefab>k__BackingField: {fileID: 3486426707978137572, guid: b89215e7ae00d734399303c0602b6c03, type: 3}
-    <PrewarmCount>k__BackingField: 15
-  - <Prefab>k__BackingField: {fileID: 92403643684560418, guid: f022541fb2b560c4a99a2dc17337a048, type: 3}
-    <PrewarmCount>k__BackingField: 15
 --- !u!114 &390961641
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -942,7 +924,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 226174668ef70cb44a39b8dbbf2a4bbe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BaseHealthCounter
-  _baseHealth: {fileID: 936567489}
   _healthText: {fileID: 470674791}
 --- !u!1 &488975118
 GameObject:
@@ -2014,27 +1995,15 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 936567490}
-  - component: {fileID: 936567489}
+  - component: {fileID: 936567492}
+  - component: {fileID: 936567491}
   m_Layer: 0
-  m_Name: BaseHealthManager
+  m_Name: GameLifetimeScope
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &936567489
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 936567488}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 165131ab03351fa49b7b5941109cf1c4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::BaseHealth
-  _initializeHealth: 3
 --- !u!4 &936567490
 Transform:
   m_ObjectHideFlags: 0
@@ -2044,12 +2013,61 @@ Transform:
   m_GameObject: {fileID: 936567488}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 8.88443, y: 3.7877, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &936567491
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 936567488}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 051480f225dc1bd41b3a7fe24781cd73, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ObjectPool
+  _poolGroups:
+  - <Header>k__BackingField: Enemies
+    <Configs>k__BackingField:
+    - <Prefab>k__BackingField: {fileID: 4944696241114774442, guid: 398ed1f949712a942b8976b909d3d34a, type: 3}
+      <PrewarmCount>k__BackingField: 50
+    - <Prefab>k__BackingField: {fileID: 9059339454348993720, guid: 4797662c254130543b29c726cfd2f0a9, type: 3}
+      <PrewarmCount>k__BackingField: 100
+  - <Header>k__BackingField: Projectiles
+    <Configs>k__BackingField:
+    - <Prefab>k__BackingField: {fileID: 8474387983528222420, guid: 3278be4823366e546ab812d5fb0cab85, type: 3}
+      <PrewarmCount>k__BackingField: 15
+    - <Prefab>k__BackingField: {fileID: 2163864260487664961, guid: 2c4807238424a3645bf5d67c317d05e8, type: 3}
+      <PrewarmCount>k__BackingField: 15
+  - <Header>k__BackingField: Towers
+    <Configs>k__BackingField:
+    - <Prefab>k__BackingField: {fileID: 3486426707978137572, guid: b89215e7ae00d734399303c0602b6c03, type: 3}
+      <PrewarmCount>k__BackingField: 15
+    - <Prefab>k__BackingField: {fileID: 92403643684560418, guid: f022541fb2b560c4a99a2dc17337a048, type: 3}
+      <PrewarmCount>k__BackingField: 15
+--- !u!114 &936567492
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 936567488}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 720d1945b14f84c4a8ee4b5309cecdc8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameLifetimeScope
+  parentReference:
+    TypeName: 
+  autoRun: 1
+  autoInjectGameObjects: []
+  _initialGold: 30
+  _initialBaseHealth: 3
 --- !u!1 &957946379
 GameObject:
   m_ObjectHideFlags: 0
@@ -2060,7 +2078,6 @@ GameObject:
   m_Component:
   - component: {fileID: 957946380}
   - component: {fileID: 957946382}
-  - component: {fileID: 957946381}
   m_Layer: 0
   m_Name: ProjectileManager
   m_TagString: Untagged
@@ -2083,23 +2100,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 390961639}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &957946381
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 957946379}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 051480f225dc1bd41b3a7fe24781cd73, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ObjectPool
-  _poolsConfig:
-  - <Prefab>k__BackingField: {fileID: 8474387983528222420, guid: 3278be4823366e546ab812d5fb0cab85, type: 3}
-    <PrewarmCount>k__BackingField: 100
-  - <Prefab>k__BackingField: {fileID: 2163864260487664961, guid: 2c4807238424a3645bf5d67c317d05e8, type: 3}
-    <PrewarmCount>k__BackingField: 100
 --- !u!114 &957946382
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2112,7 +2112,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2cab99819769ffe49a3e7360f4ba0c78, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileManager
-  _objectPool: {fileID: 957946381}
 --- !u!1 &1074003401
 GameObject:
   m_ObjectHideFlags: 0
@@ -3605,7 +3604,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1447414184}
-  - component: {fileID: 1447414183}
   - component: {fileID: 1447414182}
   - component: {fileID: 1447414181}
   m_Layer: 0
@@ -3627,7 +3625,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca535567591b5bc42b1c98bf104896aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PauseMenuUI
-  _gameModeManager: {fileID: 1447414183}
   _pauseButton: {fileID: 1891369755}
   _resumeButton: {fileID: 20576182}
   _pauseMenuPanel: {fileID: 1074003401}
@@ -3643,25 +3640,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad00cc319bcfc6943820c043bc40f50b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameOverUI
-  _gameModeManager: {fileID: 1447414183}
   _enemySpawner: {fileID: 1579588646}
   _gameOverPanel: {fileID: 1440140949}
   _restartButton: {fileID: 1603009532}
   _completedWavesText: {fileID: 1429375296}
---- !u!114 &1447414183
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1447414180}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a3b420402eab0f842b36a321bb68074d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GameModeManager
-  _baseHealth: {fileID: 936567489}
-  _currentState: 0
 --- !u!4 &1447414184
 Transform:
   m_ObjectHideFlags: 0
@@ -3670,12 +3652,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1447414180}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.93868, y: 0.08337, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1894445992}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1485171203
 GameObject:
@@ -4101,7 +4083,6 @@ GameObject:
   - component: {fileID: 1579588649}
   - component: {fileID: 1579588648}
   - component: {fileID: 1579588646}
-  - component: {fileID: 1579588647}
   m_Layer: 0
   m_Name: EnemyManager
   m_TagString: Untagged
@@ -4137,7 +4118,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3b5d623fc51c9b4d906dca3275caa02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemySpawner
-  _objectPool: {fileID: 1579588647}
   _listWaves:
   - <WaveDifficultyBonus>k__BackingField: -1
     <HardEnemySpawnRate>k__BackingField: 0.4
@@ -4152,23 +4132,6 @@ MonoBehaviour:
   _baseEnemy: {fileID: 4944696241114774442, guid: 398ed1f949712a942b8976b909d3d34a, type: 3}
   _hardEnemy: {fileID: 9059339454348993720, guid: 4797662c254130543b29c726cfd2f0a9, type: 3}
   _button: {fileID: 1405467091}
---- !u!114 &1579588647
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1579588644}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 051480f225dc1bd41b3a7fe24781cd73, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ObjectPool
-  _poolsConfig:
-  - <Prefab>k__BackingField: {fileID: 4944696241114774442, guid: 398ed1f949712a942b8976b909d3d34a, type: 3}
-    <PrewarmCount>k__BackingField: 50
-  - <Prefab>k__BackingField: {fileID: 9059339454348993720, guid: 4797662c254130543b29c726cfd2f0a9, type: 3}
-    <PrewarmCount>k__BackingField: 100
 --- !u!114 &1579588648
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4204,7 +4167,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnemyMovementManager
   _path: {fileID: 1579588648}
-  _objectPool: {fileID: 1579588647}
 --- !u!1 &1603009528
 GameObject:
   m_ObjectHideFlags: 0
@@ -4691,51 +4653,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1751326917}
   m_CullTransparentMesh: 1
---- !u!1 &1804876396
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1804876398}
-  - component: {fileID: 1804876397}
-  m_Layer: 0
-  m_Name: CurrencyManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1804876397
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1804876396}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd89fe400b49fde40a222294de8fbd03, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GoldManager
-  _initialGold: 30
---- !u!4 &1804876398
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1804876396}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 8.29402, y: -3.49134, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1805261234
 GameObject:
   m_ObjectHideFlags: 0
@@ -5163,6 +5080,7 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1447414184}
   - {fileID: 562853400}
   - {fileID: 1891369752}
   - {fileID: 1433785410}
@@ -7333,7 +7251,5 @@ SceneRoots:
   - {fileID: 1894445992}
   - {fileID: 1579588645}
   - {fileID: 390961639}
-  - {fileID: 1804876398}
   - {fileID: 936567490}
-  - {fileID: 1447414184}
   - {fileID: 467939092}
