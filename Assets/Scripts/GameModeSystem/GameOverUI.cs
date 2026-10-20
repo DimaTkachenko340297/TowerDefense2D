@@ -9,13 +9,14 @@ public class GameOverUI : MonoBehaviour
     private bool _isSubscribedToGameMode;
 
     [Inject]
-    private void Construct(GameModeManager gameModeManager)
+    private void Construct(GameModeManager gameModeManager, EnemySpawner enemySpawner)
     {
         _gameModeManager = gameModeManager;
+        _enemySpawner = enemySpawner;
         SubscribeToGameMode();
     }
 
-    [SerializeField] private EnemySpawner _enemySpawner;
+    private EnemySpawner _enemySpawner;
 
     [Header("UI References")]
     [SerializeField] private GameObject _gameOverPanel;

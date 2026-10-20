@@ -22,6 +22,8 @@ public class GameLifetimeScope : LifetimeScope
             .As<IGoldProvider, IGoldWallet>();
 
         builder.RegisterComponentInHierarchy<EnemySpawner>();
+        builder.RegisterComponentInHierarchy<WaveUI>();
+        builder.RegisterComponentInHierarchy<TowerManager>();
         builder.Register<BaseHealth>(Lifetime.Singleton)
             .WithParameter(_initialBaseHealth);
         builder.Register<GameModeManager>(Lifetime.Singleton);

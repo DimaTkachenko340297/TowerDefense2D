@@ -13,7 +13,7 @@ public class BuildingManager : MonoBehaviour
     // (Tower placedTower)
     public event Action<Tower> OnTowerPlaced;
     [SerializeField] private Tilemap _placementMap;
-    [SerializeField] private TowerSelectionPanel _selectionPanel;
+    private TowerSelectionPanel _selectionPanel;
 
     private Dictionary<Vector3Int, GameObject> _occupiedTiles = new();
     private ObjectPool _objectPool;
@@ -28,11 +28,12 @@ public class BuildingManager : MonoBehaviour
     private TowerPlacementPreview _ghostPlacementPreview;
 
     [Inject]
-    private void Construct(IGoldProvider goldProvider, IGoldWallet goldWallet, ObjectPool objectPool)
+    private void Construct(IGoldProvider goldProvider, IGoldWallet goldWallet, ObjectPool objectPool, TowerSelectionPanel selectionPanel)
     {
         _goldProvider = goldProvider;
         _goldWallet = goldWallet;
         _objectPool = objectPool;
+        _selectionPanel = selectionPanel;
     }
 
     private void Start()
@@ -52,17 +53,12 @@ public class BuildingManager : MonoBehaviour
 
         if (_selectionPanel == null)
         {
-            Debug.LogWarning("BuildingManager::Start() didn't find _selectionPanel, trying to search in scene...");
-            _selectionPanel = FindFirstObjectByType<TowerSelectionPanel>();
-
-            if (_selectionPanel == null)
-            {
-                Debug.LogError("BuildingManager::Start() didn't find _selectionPanel in the scene");
-                return;
-            }   
+            Debug.LogError("BuildingManager::Start() TowerSelectionPanel was not injected!");
+            return;
         }
 
         _selectionPanel.OnTowerSelected += StartPlacement;
+        _selectionPanel.OnTowerDeselected += CancelPlacementPreview;
 
         if (_ghostTowerPrefab == null)
         {
@@ -167,6 +163,15 @@ public class BuildingManager : MonoBehaviour
     {
         StopAllCoroutines();
         StartCoroutine(ProcessPlacementPreviewRoutine(towerPrefab, cost));
+    }
+
+    private void CancelPlacementPreview()
+    {
+        StopAllCoroutines();
+        if (_ghostTower != null)
+        {
+            _ghostTower.SetActive(false);
+        }
     }
 
     private void StopPlacement()

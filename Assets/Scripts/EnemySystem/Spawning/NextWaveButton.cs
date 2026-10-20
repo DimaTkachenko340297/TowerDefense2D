@@ -1,5 +1,6 @@
 using System;
-using System.Collections;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -27,14 +28,12 @@ public class NextWaveButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
     [SerializeField, Min(0f)] private float _pressedScaleMultiplier = 0.9f;
 
     private Vector3 _defaultTextSize;
-    private WaitForSeconds _waitForHoldDuration;
     private bool _isTooltipHidden;
     private float _pointerDownTime;
     private float _currentScaleMultiplier = 1f;
-
-    private Coroutine _holdCoroutine;
-    private Coroutine _buttonAnimationCoroutine;
-    private Coroutine _tooltipAnimationCoroutine;
+    private CancellationTokenSource _holdCancellation;
+    private CancellationTokenSource _buttonAnimationCancellation;
+    private CancellationTokenSource _tooltipAnimationCancellation;
 
     public Action OnWaveRequested;
 
@@ -55,24 +54,20 @@ public class NextWaveButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
 
     private void Awake()
     {
-        _waitForHoldDuration = new WaitForSeconds(_holdThresholdDuration);
-
         if (_text == null)
         {
             _text = GetComponentInChildren<TMP_Text>();
-            
             if (_text == null)
             {
                 Debug.LogError($"NextWaveButton::Awake() _text component is missing on {gameObject.name} and its children!");
                 enabled = false;
                 return;
             }
-            
+
             Debug.LogWarning($"NextWaveButton::Awake() _text was not assigned in Inspector. Auto-assigned to child: {_text.name}");
         }
 
         _defaultTextSize = _text.transform.localScale;
-
         if (_tooltipAnimation == null || _hideClip == null)
         {
             Debug.LogWarning("NextWaveButton::Awake() _tooltipAnimation or _hideClip is missing. Tooltip system disabled.");
@@ -83,43 +78,34 @@ public class NextWaveButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
     public void OnPointerDown(PointerEventData eventData)
     {
         _pointerDownTime = Time.time;
-        
         if (!_isBlocked)
         {
             SetPressedState(true);
         }
 
-        if (_holdCoroutine != null)
-        {
-            StopCoroutine(_holdCoroutine);
-        }
-        _holdCoroutine = StartCoroutine(HoldRoutine());
+        CancelAndDispose(ref _holdCancellation);
+        _holdCancellation = new CancellationTokenSource();
+        HoldAsync(_holdCancellation.Token).Forget();
 
         if (!_isTooltipHidden)
         {
-            if (_tooltipAnimationCoroutine != null) 
-            {
-                StopCoroutine(_tooltipAnimationCoroutine);
-            }
-            _tooltipAnimationCoroutine = StartCoroutine(HideTooltipRoutine());
+            CancelAndDispose(ref _tooltipAnimationCancellation);
+            _tooltipAnimationCancellation = new CancellationTokenSource();
+            HideTooltipAsync(_tooltipAnimationCancellation.Token).Forget();
         }
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
-        if (_holdCoroutine != null)
-        {
-            StopCoroutine(_holdCoroutine);
-        }
-
+        CancelAndDispose(ref _holdCancellation);
         float holdDuration = Time.time - _pointerDownTime;
-
         if (holdDuration <= _holdThresholdDuration)
         {
             if (!_isBlocked)
             {
                 SetPressedState(false);
             }
+
             _text.text = "Go";
             IsAuto = false;
             OnWaveRequested?.Invoke();
@@ -130,62 +116,87 @@ public class NextWaveButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
     {
         float targetAlpha = isPressed ? _pressedAlpha : _normalAlpha;
         float targetScale = isPressed ? _pressedScaleMultiplier : _normalScaleMultiplier;
+        CancelAndDispose(ref _buttonAnimationCancellation);
+        _buttonAnimationCancellation = new CancellationTokenSource();
+        AnimateButtonAsync(_text.color.a, targetAlpha, _currentScaleMultiplier, targetScale, _buttonAnimationCancellation.Token).Forget();
+    }
 
-        if (_buttonAnimationCoroutine != null) 
+    private async UniTask HoldAsync(CancellationToken cancellationToken)
+    {
+        try
         {
-            StopCoroutine(_buttonAnimationCoroutine);
+            await DelayOrYieldAsync(_holdThresholdDuration, cancellationToken);
+            _text.text = "Auto";
+            IsAuto = true;
+            OnWaveRequested?.Invoke();
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private async UniTask HideTooltipAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            _tooltipAnimation.Play(_hideClip.name);
+            await DelayOrYieldAsync(_hideClip.length, cancellationToken);
+            _tooltipAnimation.gameObject.SetActive(false);
+            _isTooltipHidden = true;
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private static UniTask DelayOrYieldAsync(float seconds, CancellationToken cancellationToken)
+    {
+        return seconds <= 0f
+            ? UniTask.Yield(PlayerLoopTiming.Update, cancellationToken)
+            : UniTask.Delay(TimeSpan.FromSeconds(seconds), cancellationToken: cancellationToken);
+    }
+    private async UniTask AnimateButtonAsync(float startAlpha, float targetAlpha, float startScaleMultiplier, float targetScaleMultiplier, CancellationToken cancellationToken)
+    {
+        try
+        {
+            float currentTime = 0f;
+            while (currentTime < _animationDuration)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                currentTime += Time.deltaTime;
+                float normalizedTime = Mathf.Clamp01(currentTime / _animationDuration);
+                float curveProgress = _animationCurve.Evaluate(normalizedTime);
+                float currentAlpha = Mathf.Lerp(startAlpha, targetAlpha, curveProgress);
+                _currentScaleMultiplier = Mathf.Lerp(startScaleMultiplier, targetScaleMultiplier, curveProgress);
+
+                Color currentColor = _text.color;
+                currentColor.a = Mathf.Clamp01(currentAlpha);
+                _text.color = currentColor;
+                _text.transform.localScale = _defaultTextSize * _currentScaleMultiplier;
+                await UniTask.NextFrame(cancellationToken);
+            }
+
+            Color finalColor = _text.color;
+            finalColor.a = Mathf.Clamp01(targetAlpha);
+            _text.color = finalColor;
+            _currentScaleMultiplier = targetScaleMultiplier;
+            _text.transform.localScale = _defaultTextSize * _currentScaleMultiplier;
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private void OnDisable()
+    {
+        CancelAndDispose(ref _holdCancellation);
+        CancelAndDispose(ref _buttonAnimationCancellation);
+        CancelAndDispose(ref _tooltipAnimationCancellation);
+    }
+
+    private static void CancelAndDispose(ref CancellationTokenSource cancellationTokenSource)
+    {
+        if (cancellationTokenSource == null)
+        {
+            return;
         }
 
-        _buttonAnimationCoroutine = StartCoroutine(AnimateButtonRoutine(_text.color.a, targetAlpha, _currentScaleMultiplier, targetScale));
-    }
-
-    private IEnumerator HoldRoutine()
-    {
-        yield return _waitForHoldDuration;
-        
-        _text.text = "Auto";
-        IsAuto = true;
-        OnWaveRequested?.Invoke();
-    }
-
-    private IEnumerator HideTooltipRoutine()
-    {
-        _tooltipAnimation.Play(_hideClip.name);
-
-        yield return new WaitForSeconds(_hideClip.length);
-
-        _tooltipAnimation.gameObject.SetActive(false);
-        _isTooltipHidden = true;
-    }
-
-    private IEnumerator AnimateButtonRoutine(float startAlpha, float targetAlpha, float startScaleMultiplier, float targetScaleMultiplier)
-    {
-        float currentTime = 0f;
-
-        while (currentTime < _animationDuration)
-        {
-            currentTime += Time.deltaTime;
-
-            float normalizedTime = Mathf.Clamp01(currentTime / _animationDuration);
-            float curveProgress = _animationCurve.Evaluate(normalizedTime);
-
-            float currentAlpha = Mathf.Lerp(startAlpha, targetAlpha, curveProgress);
-            _currentScaleMultiplier = Mathf.Lerp(startScaleMultiplier, targetScaleMultiplier, curveProgress);
-
-            Color currentColor = _text.color;
-            currentColor.a = Mathf.Clamp01(currentAlpha);
-            _text.color = currentColor;
-
-            _text.transform.localScale = _defaultTextSize * _currentScaleMultiplier;
-
-            yield return null;
-        } 
-
-        Color finalColor = _text.color;
-        finalColor.a = Mathf.Clamp01(targetAlpha);
-        _text.color = finalColor;
-
-        _currentScaleMultiplier = targetScaleMultiplier;
-        _text.transform.localScale = _defaultTextSize * _currentScaleMultiplier;
+        cancellationTokenSource.Cancel();
+        cancellationTokenSource.Dispose();
+        cancellationTokenSource = null;
     }
 }

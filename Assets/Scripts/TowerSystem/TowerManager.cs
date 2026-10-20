@@ -1,10 +1,17 @@
 using System.Collections.Generic;
 using UnityEngine;
+using VContainer;
 
 public class TowerManager : MonoBehaviour
 {
-    [SerializeField] private BuildingManager _buildingManager;
+    private BuildingManager _buildingManager;
     private readonly List<Tower> _awakeTowers = new List<Tower>();
+
+    [Inject]
+    private void Construct(BuildingManager buildingManager)
+    {
+        _buildingManager = buildingManager;
+    }
 
     private void Start()
     {

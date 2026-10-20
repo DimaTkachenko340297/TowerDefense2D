@@ -1,5 +1,6 @@
 using System;
-using System.Collections;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -36,7 +37,7 @@ public class TowerSelectButton : MonoBehaviour, IPointerDownHandler
 
     private Vector3 _defaultIconSize;
     private float _currentScaleMultiplier = 1f;
-    private Coroutine _animationCoroutine;
+    private CancellationTokenSource _animationCancellation;
 
     // (TowerSelectButton thisButton)
     public Action<TowerSelectButton> OnButtonSelected;
@@ -56,12 +57,9 @@ public class TowerSelectButton : MonoBehaviour, IPointerDownHandler
 
     private void Awake()
     {
-        if (_icon == null)
+        if (_icon == null && transform.childCount > 0)
         {
-            if (transform.childCount > 0)
-            {
-                _icon = transform.GetChild(0).GetComponent<Image>();
-            }
+            _icon = transform.GetChild(0).GetComponent<Image>();
         }
 
         if (_icon != null)
@@ -81,32 +79,27 @@ public class TowerSelectButton : MonoBehaviour, IPointerDownHandler
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        if (!_hasEnoughGold)
+        if (_hasEnoughGold)
         {
-            return;
+            OnButtonSelected?.Invoke(this);
         }
-
-        OnButtonSelected?.Invoke(this);
     }
 
     public bool SetHasEnoughGold(int amount)
     {
         bool hasGold = _cost <= amount;
-
         if (_hasEnoughGold == hasGold)
         {
             return hasGold;
         }
 
         _hasEnoughGold = hasGold;
-
         if (_costText != null)
         {
             _costText.color = _hasEnoughGold ? _affordableColor : _unaffordableColor;
         }
 
         UpdateVisualState();
-
         return hasGold;
     }
 
@@ -114,7 +107,6 @@ public class TowerSelectButton : MonoBehaviour, IPointerDownHandler
     {
         float targetAlpha;
         float targetScale;
-
         if (!_hasEnoughGold)
         {
             targetAlpha = _disabledAlpha;
@@ -131,45 +123,60 @@ public class TowerSelectButton : MonoBehaviour, IPointerDownHandler
             targetScale = _normalScaleMultiplier;
         }
 
-        if (_animationCoroutine != null)
+        if (_icon == null)
         {
-            StopCoroutine(_animationCoroutine);
+            return;
         }
 
-        if (_icon != null)
-        {
-            _animationCoroutine = StartCoroutine(AnimateButtonRoutine(_icon.color.a, targetAlpha, _currentScaleMultiplier, targetScale));
-        }
+        CancelAndDispose(ref _animationCancellation);
+        _animationCancellation = new CancellationTokenSource();
+        AnimateButtonAsync(_icon.color.a, targetAlpha, _currentScaleMultiplier, targetScale, _animationCancellation.Token).Forget();
     }
 
-    private IEnumerator AnimateButtonRoutine(float startAlpha, float targetAlpha, float startScale, float targetScale)
+    private async UniTask AnimateButtonAsync(float startAlpha, float targetAlpha, float startScale, float targetScale, CancellationToken cancellationToken)
     {
-        float currentTime = 0f;
-
-        while (currentTime < _animationDuration)
+        try
         {
-            currentTime += Time.deltaTime;
+            float currentTime = 0f;
+            while (currentTime < _animationDuration)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                currentTime += Time.deltaTime;
+                float normalizedTime = Mathf.Clamp01(currentTime / _animationDuration);
+                float curveProgress = _animationCurve.Evaluate(normalizedTime);
+                float currentAlpha = Mathf.Lerp(startAlpha, targetAlpha, curveProgress);
+                _currentScaleMultiplier = Mathf.Lerp(startScale, targetScale, curveProgress);
 
-            float normalizedTime = Mathf.Clamp01(currentTime / _animationDuration);
-            float curveProgress = _animationCurve.Evaluate(normalizedTime);
+                Color currentColor = _icon.color;
+                currentColor.a = Mathf.Clamp01(currentAlpha);
+                _icon.color = currentColor;
+                _icon.transform.localScale = _defaultIconSize * _currentScaleMultiplier;
+                await UniTask.NextFrame(cancellationToken);
+            }
 
-            float currentAlpha = Mathf.Lerp(startAlpha, targetAlpha, curveProgress);
-            _currentScaleMultiplier = Mathf.Lerp(startScale, targetScale, curveProgress);
-
-            Color currentColor = _icon.color;
-            currentColor.a = Mathf.Clamp01(currentAlpha);
-            _icon.color = currentColor;
-
+            Color finalColor = _icon.color;
+            finalColor.a = Mathf.Clamp01(targetAlpha);
+            _icon.color = finalColor;
+            _currentScaleMultiplier = targetScale;
             _icon.transform.localScale = _defaultIconSize * _currentScaleMultiplier;
+        }
+        catch (OperationCanceledException) { }
+    }
 
-            yield return null;
+    private void OnDisable()
+    {
+        CancelAndDispose(ref _animationCancellation);
+    }
+
+    private static void CancelAndDispose(ref CancellationTokenSource cancellationTokenSource)
+    {
+        if (cancellationTokenSource == null)
+        {
+            return;
         }
 
-        Color finalColor = _icon.color;
-        finalColor.a = Mathf.Clamp01(targetAlpha);
-        _icon.color = finalColor;
-
-        _currentScaleMultiplier = targetScale;
-        _icon.transform.localScale = _defaultIconSize * _currentScaleMultiplier;
+        cancellationTokenSource.Cancel();
+        cancellationTokenSource.Dispose();
+        cancellationTokenSource = null;
     }
 }

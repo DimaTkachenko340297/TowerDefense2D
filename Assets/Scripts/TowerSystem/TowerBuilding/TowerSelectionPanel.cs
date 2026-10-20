@@ -10,6 +10,7 @@ public class TowerSelectionPanel : MonoBehaviour
     private IGoldProvider _goldProvider;
     // (GameObject towerPrefabe, int cost)
     public Action<GameObject, int> OnTowerSelected;
+    public Action OnTowerDeselected;
     [Inject]
     private void Construct(IGoldProvider goldProvider)
     {
@@ -99,11 +100,12 @@ public class TowerSelectionPanel : MonoBehaviour
     public void DeselectTower()
     {
         if (_currentButton == null)
-        { 
+        {
             return;
         }
 
         _currentButton.IsSelected = false;
         _currentButton = null;
+        OnTowerDeselected?.Invoke();
     }
 }

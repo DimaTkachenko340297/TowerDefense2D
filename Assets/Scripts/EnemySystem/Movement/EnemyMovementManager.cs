@@ -1,5 +1,6 @@
 using System;
-using System.Collections;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using UnityEngine;
 using VContainer;
@@ -14,8 +15,8 @@ public class EnemyMovementManager : MonoBehaviour, IEnemyRegistry, IEnemyRouteTr
     private readonly List<Enemy> _activeEnemies = new List<Enemy>();
     public IReadOnlyList<Enemy> ActiveEnemies => _activeEnemies;
     private List<Enemy>[] _enemiesPerSegment;
-    private Coroutine _movementCoroutine;
-    
+    private CancellationTokenSource _movementCancellationTokenSource;
+
     // (int activatedSegmentIndex)
     public event Action<int> OnSegmentActivated;
     // (int deactivatedSegmentIndex)
@@ -101,10 +102,7 @@ public class EnemyMovementManager : MonoBehaviour, IEnemyRegistry, IEnemyRouteTr
             }
         }
 
-        if (_movementCoroutine == null)
-        {
-            _movementCoroutine = StartCoroutine(MoveEnemiesRoutine());
-        }
+        StartMovement();
     }
 
     public void UnregisterEnemy(Enemy enemy)
@@ -143,87 +141,125 @@ public class EnemyMovementManager : MonoBehaviour, IEnemyRegistry, IEnemyRouteTr
         }
     }
 
-    private IEnumerator MoveEnemiesRoutine()
+    private async UniTask MoveEnemiesAsync(CancellationToken cancellationToken)
     {
-        while (_activeEnemies.Count > 0)
+        try
         {
-            float deltaTime = Time.deltaTime;
-
-            for (int i = _activeEnemies.Count - 1; i >= 0; i--)
+            while (_activeEnemies.Count > 0)
             {
-                Enemy enemy = _activeEnemies[i];
-                if (enemy == null)
+                cancellationToken.ThrowIfCancellationRequested();
+                float deltaTime = Time.deltaTime;
+
+                for (int i = _activeEnemies.Count - 1; i >= 0; i--)
                 {
-                    _activeEnemies.RemoveAt(i);
-                    continue;
-                }
-
-                if (!enemy.gameObject.activeInHierarchy)
-                {
-                    enemy.OnDied -= UnregisterEnemy;
-                    enemy.NotifyDespawned();
-                    _activeEnemies.RemoveAt(i);
-                    continue;
-                }
-
-                int currentSegment = enemy.CurrentWaypointIndex;
-                if (currentSegment >= _path.PointCount - 1)
-                {
-                    DespawnEnemy(i, enemy);
-                    continue;
-                }
-
-                Vector3 startPosition = _path.GetPoint(currentSegment);
-                Vector3 targetPosition = _path.GetPoint(currentSegment + 1);
-
-                float segmentDistance = _path.GetSegmentDistance(currentSegment);
-
-                if (segmentDistance > 0.0001f)
-                {
-                    enemy.LerpProgress += (enemy.MoveSpeed * deltaTime) / segmentDistance;
-                }
-                else
-                {
-                    enemy.LerpProgress = 1f;
-                }
-
-                enemy.transform.position = Vector3.Lerp(startPosition, targetPosition, enemy.LerpProgress);
-
-                if (enemy.LerpProgress >= 1f)
-                {
-                    _enemiesPerSegment[currentSegment].Remove(enemy);
-
-                    if (_enemiesPerSegment[currentSegment].Count == 0)
+                    Enemy enemy = _activeEnemies[i];
+                    if (enemy == null)
                     {
-                        OnSegmentDeactivated?.Invoke(currentSegment);
+                        _activeEnemies.RemoveAt(i);
+                        continue;
                     }
 
-                    enemy.CurrentWaypointIndex++;
-                    enemy.LerpProgress = 0f;
-
-                    if (enemy.CurrentWaypointIndex < _path.PointCount - 1)
+                    if (!enemy.gameObject.activeInHierarchy)
                     {
-                        _enemiesPerSegment[enemy.CurrentWaypointIndex].Add(enemy);
+                        enemy.OnDied -= UnregisterEnemy;
+                        enemy.NotifyDespawned();
+                        _activeEnemies.RemoveAt(i);
+                        continue;
+                    }
 
-                        if (_enemiesPerSegment[enemy.CurrentWaypointIndex].Count == 1)
-                        {
-                            OnSegmentActivated?.Invoke(enemy.CurrentWaypointIndex);
-                        }
+                    int currentSegment = enemy.CurrentWaypointIndex;
+                    if (currentSegment >= _path.PointCount - 1)
+                    {
+                        DespawnEnemy(i, enemy);
+                        continue;
+                    }
+
+                    Vector3 startPosition = _path.GetPoint(currentSegment);
+                    Vector3 targetPosition = _path.GetPoint(currentSegment + 1);
+                    float segmentDistance = _path.GetSegmentDistance(currentSegment);
+
+                    if (segmentDistance > 0.0001f)
+                    {
+                        enemy.LerpProgress += (enemy.MoveSpeed * deltaTime) / segmentDistance;
                     }
                     else
                     {
-                        OnEnemyReachedBase?.Invoke();
-                        DespawnEnemy(i, enemy);
+                        enemy.LerpProgress = 1f;
+                    }
+
+                    enemy.transform.position = Vector3.Lerp(startPosition, targetPosition, enemy.LerpProgress);
+
+                    if (enemy.LerpProgress >= 1f)
+                    {
+                        _enemiesPerSegment[currentSegment].Remove(enemy);
+                        if (_enemiesPerSegment[currentSegment].Count == 0)
+                        {
+                            OnSegmentDeactivated?.Invoke(currentSegment);
+                        }
+
+                        enemy.CurrentWaypointIndex++;
+                        enemy.LerpProgress = 0f;
+
+                        if (enemy.CurrentWaypointIndex < _path.PointCount - 1)
+                        {
+                            _enemiesPerSegment[enemy.CurrentWaypointIndex].Add(enemy);
+                            if (_enemiesPerSegment[enemy.CurrentWaypointIndex].Count == 1)
+                            {
+                                OnSegmentActivated?.Invoke(enemy.CurrentWaypointIndex);
+                            }
+                        }
+                        else
+                        {
+                            OnEnemyReachedBase?.Invoke();
+                            DespawnEnemy(i, enemy);
+                        }
                     }
                 }
-            }
 
-            yield return null;
+                await UniTask.NextFrame(cancellationToken);
+            }
+        }
+        catch (OperationCanceledException) { }
+
+        finally
+        {
+            if (_movementCancellationTokenSource != null && _movementCancellationTokenSource.Token == cancellationToken)
+            {
+                _movementCancellationTokenSource.Dispose();
+                _movementCancellationTokenSource = null;
+            }
+        }
+    }
+    private void StartMovement()
+    {
+        if (_movementCancellationTokenSource != null)
+        {
+            return;
         }
 
-        _movementCoroutine = null;
+        _movementCancellationTokenSource = new CancellationTokenSource();
+        MoveEnemiesAsync(_movementCancellationTokenSource.Token).Forget();
     }
 
+    private void OnEnable()
+    {
+        if (_activeEnemies.Count > 0)
+        {
+            StartMovement();
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (_movementCancellationTokenSource == null)
+        {
+            return;
+        }
+
+        _movementCancellationTokenSource.Cancel();
+        _movementCancellationTokenSource.Dispose();
+        _movementCancellationTokenSource = null;
+    }
     private void DespawnEnemy(int index, Enemy enemy)
     {
         _activeEnemies.RemoveAt(index);

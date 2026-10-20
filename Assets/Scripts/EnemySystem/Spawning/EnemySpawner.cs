@@ -1,5 +1,6 @@
 using System;
-using System.Collections;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using UnityEngine;
 using VContainer;
@@ -37,9 +38,7 @@ public class EnemySpawner : MonoBehaviour
     // (int wavesCount)
     public Action<int> OnCompletedWavesCountChanged;
 
-    private WaitForSeconds _waitForManualWaveDelay;
-    private WaitForSeconds _waitForAutoWaveDelay;
-    private WaitForSeconds _waitForSpawnNextEnemy;
+    private CancellationTokenSource _spawnCancellationTokenSource;
 
     private int _accumulatedEnemyCount;
     private int _currentWaveIndex;
@@ -57,11 +56,7 @@ public class EnemySpawner : MonoBehaviour
 
     private void Awake()
     {
-        _waitForManualWaveDelay = new WaitForSeconds(_manualWaveDelay);
-        _waitForAutoWaveDelay = new WaitForSeconds(_autoWaveDelay);
-        _waitForSpawnNextEnemy = new WaitForSeconds(_timeBetweenSpawnNextEnemy);
-
-        ResetSpawner();
+ResetSpawner();
     }
 
     private void Start()
@@ -89,68 +84,107 @@ public class EnemySpawner : MonoBehaviour
         if (_button != null)
         {
             _button.OnWaveRequested -= StartWave;
+            _button.IsBlocked = false;
         }
+
+        CancelSpawning();
     }
 
     private void StartWave()
     {
-        if (!_isSpawning)
+        if (_isSpawning)
         {
-            StartCoroutine(SpawnWave());
+            return;
         }
+
+        _spawnCancellationTokenSource = new CancellationTokenSource();
+        SpawnWaveAsync(_spawnCancellationTokenSource.Token).Forget();
     }
 
-    private IEnumerator SpawnWave()
+    private async UniTask SpawnWaveAsync(CancellationToken cancellationToken)
     {
         _isSpawning = true;
-        _button.IsBlocked = true;
-
-        if (_listWaves == null || _listWaves.Count == 0)
+        if (_button != null)
         {
-            Debug.LogWarning("EnemySpawner::SpawnWave() _listWaves is empty or not initialized!");
+            _button.IsBlocked = true;
+        }
+
+        try
+        {
+            if (_listWaves == null || _listWaves.Count == 0)
+            {
+                Debug.LogWarning("EnemySpawner::SpawnWaveAsync() _listWaves is empty or not initialized!");
+                return;
+            }
+
+            do
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                _wavesCount += 1;
+                OnCompletedWavesCountChanged?.Invoke(_wavesCount);
+
+                EnemyWave currentWaveConfig = _listWaves[_currentWaveIndex];
+                _accumulatedEnemyCount += currentWaveConfig.WaveDifficultyBonus;
+                _accumulatedEnemyCount = Mathf.Max(_accumulatedEnemyCount, 1);
+                int hardEnemyCount = Mathf.RoundToInt(_accumulatedEnemyCount * currentWaveConfig.HardEnemySpawnRate);
+                int baseEnemyCount = _accumulatedEnemyCount - hardEnemyCount;
+
+                for (int i = 0; i < baseEnemyCount; i++)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    SpawnSingleEnemy(_baseEnemy);
+                    await DelayOrYieldAsync(_timeBetweenSpawnNextEnemy, cancellationToken);
+                }
+
+                for (int i = 0; i < hardEnemyCount; i++)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    SpawnSingleEnemy(_hardEnemy);
+                    await DelayOrYieldAsync(_timeBetweenSpawnNextEnemy, cancellationToken);
+                }
+
+                _currentWaveIndex = (_currentWaveIndex + 1) % _listWaves.Count;
+                float waveDelay = _button.IsAuto ? _autoWaveDelay : _manualWaveDelay;
+                await DelayOrYieldAsync(waveDelay, cancellationToken);
+            }
+            while (_button != null && _button.IsAuto);
+        }
+        catch (OperationCanceledException) { }
+
+        finally
+        {
             _isSpawning = false;
-            _button.IsBlocked = false;
-            yield break;
+            if (_button != null)
+            {
+                _button.IsBlocked = false;
+            }
+
+            if (_spawnCancellationTokenSource != null && _spawnCancellationTokenSource.Token == cancellationToken)
+            {
+                _spawnCancellationTokenSource.Dispose();
+                _spawnCancellationTokenSource = null;
+            }
         }
-
-        _wavesCount += 1;
-        OnCompletedWavesCountChanged?.Invoke(_wavesCount);
-
-        EnemyWave currentWaveConfig = _listWaves[_currentWaveIndex];
-
-        _accumulatedEnemyCount += currentWaveConfig.WaveDifficultyBonus;
-        _accumulatedEnemyCount = Mathf.Max(_accumulatedEnemyCount, 1);
-        int hardEnemyCount = Mathf.RoundToInt(_accumulatedEnemyCount * currentWaveConfig.HardEnemySpawnRate);
-        int baseEnemyCount = _accumulatedEnemyCount - hardEnemyCount;
-
-        for (int i = 0; i < baseEnemyCount; i++)
-        {
-            SpawnSingleEnemy(_baseEnemy);
-            yield return _waitForSpawnNextEnemy;
-        }
-
-        for (int i = 0; i < hardEnemyCount; i++)
-        {
-            SpawnSingleEnemy(_hardEnemy);
-            yield return _waitForSpawnNextEnemy;
-        }
-
-        _currentWaveIndex = (_currentWaveIndex + 1) % _listWaves.Count;
-
-        WaitForSeconds currentDelay = _button.IsAuto ? _waitForAutoWaveDelay : _waitForManualWaveDelay;
-
-        yield return currentDelay;
-
-        if (_button.IsAuto)
-        {
-            StartCoroutine(SpawnWave());
-            yield break;
-        }
-
-        _isSpawning = false;
-        _button.IsBlocked = false;
     }
 
+    private static UniTask DelayOrYieldAsync(float seconds, CancellationToken cancellationToken)
+    {
+        return seconds <= 0f
+            ? UniTask.NextFrame(cancellationToken)
+            : UniTask.Delay(TimeSpan.FromSeconds(seconds), cancellationToken: cancellationToken);
+    }
+    private void CancelSpawning()
+    {
+        if (_spawnCancellationTokenSource == null)
+        {
+            return;
+        }
+
+        _spawnCancellationTokenSource.Cancel();
+        _spawnCancellationTokenSource.Dispose();
+        _spawnCancellationTokenSource = null;
+        _isSpawning = false;
+    }
     private void SpawnSingleEnemy(GameObject enemyPrefab)
     {
         if (enemyPrefab == null)

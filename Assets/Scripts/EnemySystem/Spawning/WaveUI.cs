@@ -1,10 +1,17 @@
 using UnityEngine;
 using TMPro;
+using VContainer;
 
 public class WaveUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text _waveText;
-    [SerializeField] private EnemySpawner _enemySpawner;
+    private EnemySpawner _enemySpawner;
+
+    [Inject]
+    private void Construct(EnemySpawner enemySpawner)
+    {
+        _enemySpawner = enemySpawner;
+    }
 
     private void Start()
     {
